@@ -14,7 +14,7 @@ app.use(helmet({
   crossOriginResourcePolicy: { policy: 'cross-origin' },
   contentSecurityPolicy: false // Disable CSP for development (images, scripts from various origins)
 }));
-const cors = require("cors");
+
 
 const allowedOrigin = process.env.FRONTEND_URL;
 
@@ -80,7 +80,7 @@ app.use('*', (req, res) => {
 });
 
 // Connect to MongoDB
-mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/dealdrop')
+mongoose.connect(process.env.MONGODB_URI)
   .then(() => {
     console.log('Connected to MongoDB');
   })
