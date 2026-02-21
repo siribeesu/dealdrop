@@ -1,4 +1,3 @@
-app.set('trust proxy', 1);
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
@@ -9,7 +8,7 @@ const rateLimit = require('express-rate-limit');
 require('dotenv').config();
 
 const app = express();
-
+app.set('trust proxy', 1);
 // Security middleware
 app.use(helmet({
   crossOriginResourcePolicy: { policy: 'cross-origin' },
