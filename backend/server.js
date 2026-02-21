@@ -14,13 +14,17 @@ app.use(helmet({
   crossOriginResourcePolicy: { policy: 'cross-origin' },
   contentSecurityPolicy: false // Disable CSP for development (images, scripts from various origins)
 }));
+const cors = require("cors");
+
+const allowedOrigin = process.env.FRONTEND_URL;
+
 app.use(cors({
-  origin: process.env.FRONTEND_URL || 'http://localhost:5173',
+  origin: allowedOrigin,
   credentials: true
 }));
+
 app.use(mongoSanitize());
 app.use(xss());
-
 // Rate limiting (Disabled in development for smoother workflow)
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000,
