@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
-import { useAuth } from '../contexts/AuthContext'
+import { useAuth } from '../contexts/AuthContext.jsx'
 import {
   Trash2, Edit, Plus, LogOut, Users, Package, ShoppingCart,
   IndianRupee, BarChart3, Search, LayoutDashboard, ShoppingBag,
@@ -9,8 +9,8 @@ import {
   Database, Bell, Filter, MoreVertical, Eye, Download, PieChart, MessageSquare,
   ArrowRight
 } from 'lucide-react'
-import { adminAPI, productsAPI } from '../lib/api'
-import Logo from '../components/ui/Logo'
+import { adminAPI, productsAPI } from '../lib/api.js'
+import Logo from '../components/ui/Logo.jsx'
 
 const AdminDashboard = () => {
   const navigate = useNavigate()
@@ -44,33 +44,28 @@ const AdminDashboard = () => {
   const fetchDashboardData = async () => {
     try {
       setLoading(true)
-      console.log('🚀 Initiating Admin Dashboard Data Fetch...')
 
       // Fetch stats
       try {
         const stats = await adminAPI.getDashboardStats()
-        console.log('📊 Stats Response:', stats)
         if (stats.success) setDashboardStats(stats.stats)
       } catch (e) { console.error('❌ Stats fetch failed:', e) }
 
       // Fetch products
       try {
         const prod = await productsAPI.getProducts({ limit: 100 })
-        console.log('📦 Products Response:', prod)
         if (prod.success) setProducts(prod.products || [])
       } catch (e) { console.error('❌ Products fetch failed:', e) }
 
       // Fetch orders
       try {
         const ord = await adminAPI.getOrders({ limit: 100 })
-        console.log('🛒 Orders Response:', ord)
         if (ord.success) setOrders(ord.orders || [])
       } catch (e) { console.error('❌ Orders fetch failed:', e) }
 
       // Fetch users
       try {
         const usr = await adminAPI.getUsers({ limit: 100 })
-        console.log('👥 Users Response:', usr)
         if (usr.success) setUsers(usr.users || [])
       } catch (e) { console.error('❌ Users fetch failed:', e) }
 
@@ -78,7 +73,6 @@ const AdminDashboard = () => {
       console.error('💥 Dashboard data fetch error:', error)
     } finally {
       setLoading(false)
-      console.log('🏁 Dashboard Data Fetch Cycle Complete.')
     }
   }
 

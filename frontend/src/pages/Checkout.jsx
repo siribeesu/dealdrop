@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { Truck, CreditCard, ShieldCheck, Loader2, ArrowLeft, ChevronRight, Lock, MapPin, Search } from 'lucide-react'
 import { Link, useNavigate } from 'react-router-dom'
-import { cartAPI, ordersAPI } from '../lib/api'
+import { cartAPI, ordersAPI } from '../lib/api.js'
 
 const Checkout = () => {
   const [formData, setFormData] = useState({

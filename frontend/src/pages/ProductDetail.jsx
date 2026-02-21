@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { Star, ShoppingCart, Heart, Share2, Truck, ShieldCheck, RotateCcw, Loader2, ArrowRight, Check, Minus, Plus } from 'lucide-react'
-import { productsAPI, cartAPI } from '../lib/api'
-import { useAuth } from '../contexts/AuthContext'
+import { productsAPI, cartAPI } from '../lib/api.js'
+import { useAuth } from '../contexts/AuthContext.jsx'
 
 const ProductDetail = () => {
   const { id } = useParams()

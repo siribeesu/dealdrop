@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { Eye, EyeOff, User, Mail, Phone, MapPin, Loader2, ChevronRight, ShieldCheck, Lock, Edit3 } from 'lucide-react'
 import { Link } from 'react-router-dom'
-import { useAuth } from '../contexts/AuthContext'
+import { useAuth } from '../contexts/AuthContext.jsx'
 
 const Profile = () => {
   const { user, updateProfile, changePassword } = useAuth()

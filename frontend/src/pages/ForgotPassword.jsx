@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import { Link } from 'react-router-dom'
-import { authAPI } from '../lib/api'
+import { authAPI } from '../lib/api.js'
 import { Mail, ArrowLeft, Loader2, CheckCircle, ChevronRight, ShieldQuestion } from 'lucide-react'
 
 const ForgotPassword = () => {

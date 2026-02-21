@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react'
-import { Button } from '../components/ui/button'
+import { Button } from '../components/ui/button.jsx'
 import { Minus, Plus, Trash2, ShoppingBag, ArrowRight, ShieldCheck, Truck, ArrowLeft, Loader2 } from 'lucide-react'
 import { Link } from 'react-router-dom'
-import { cartAPI } from '../lib/api'
+import { cartAPI } from '../lib/api.js'
 
 const Cart = () => {
   const [cartItems, setCartItems] = useState([])

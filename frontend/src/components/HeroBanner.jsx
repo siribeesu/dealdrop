@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { Button } from './ui/button'
+import { Button } from './ui/button.jsx'
 import { Link, useNavigate } from 'react-router-dom'
 import { ArrowRight, Truck, ShieldCheck, Headphones } from 'lucide-react'
 

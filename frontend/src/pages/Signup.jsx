@@ -1,7 +1,7 @@
 import React, { useState } from 'react'
 import { EyeOff, Eye, User, Mail, Lock, ArrowRight, ShieldCheck, Loader2 } from 'lucide-react'
 import { Link, useNavigate } from 'react-router-dom'
-import { useAuth } from '../contexts/AuthContext'
+import { useAuth } from '../contexts/AuthContext.jsx'
 
 const Signup = () => {
   const [showPassword, setShowPassword] = useState(false)

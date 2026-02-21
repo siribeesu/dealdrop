@@ -1,8 +1,8 @@
 import React, { useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { Shield, Mail, Lock, AlertCircle, Loader2, ArrowLeft } from 'lucide-react'
-import { useAuth } from '../contexts/AuthContext'
-import Logo from '../components/ui/Logo'
+import { useAuth } from '../contexts/AuthContext.jsx'
+import Logo from '../components/ui/Logo.jsx'
 
 const AdminLogin = () => {
     const [credentials, setCredentials] = useState({ email: '', password: '' })

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react'
-import HeroBanner from '../components/HeroBanner'
-import ProductCard from '../components/ProductCard'
-import { productsAPI } from '../lib/api'
+import HeroBanner from '../components/HeroBanner.jsx'
+import ProductCard from '../components/ProductCard.jsx'
+import { productsAPI } from '../lib/api.js'
 import { Link } from 'react-router-dom'
 import { Package, Truck, LifeBuoy, ShieldCheck, ArrowRight, Zap, Star, CreditCard, Headphones } from 'lucide-react'
 

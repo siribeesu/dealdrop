@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import { useParams, Link } from 'react-router-dom'
-import { authAPI } from '../lib/api'
+import { authAPI } from '../lib/api.js'
 import { CheckCircle, XCircle, Loader2 } from 'lucide-react'
 
 const Verify = () => {

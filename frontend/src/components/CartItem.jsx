@@ -1,5 +1,5 @@
 import React from 'react'
-import { Button } from './ui/button'
+import { Button } from './ui/button.jsx'
 import { Minus, Plus, Trash2 } from 'lucide-react'
 
 const CartItem = ({ item, onUpdateQuantity, onRemove }) => {

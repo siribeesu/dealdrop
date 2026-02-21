@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { ShoppingCart, User, LogOut, Menu, X, ChevronDown, Shield, LayoutDashboard, UserCircle, Heart, Search } from 'lucide-react'
-import { useAuth } from '../../contexts/AuthContext'
-import Logo from './Logo'
+import { useAuth } from '../../contexts/AuthContext.jsx'
+import Logo from './Logo.jsx'
 
 const Navbar = () => {
   const { isAuthenticated, user, logout, wishlist } = useAuth()

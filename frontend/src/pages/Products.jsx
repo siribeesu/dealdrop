@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import ProductCard from '../components/ProductCard'
-import { productsAPI } from '../lib/api'
-import { Input } from '../components/ui/input'
+import ProductCard from '../components/ProductCard.jsx'
+import { productsAPI } from '../lib/api.js'
+import { Input } from '../components/ui/input.jsx'
 import { Search, SlidersHorizontal, X, ShoppingBag, Loader2, ChevronRight } from 'lucide-react'
 
 const Products = () => {

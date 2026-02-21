@@ -1,7 +1,7 @@
 import React from 'react'
 import { Button } from './components/ui/button.jsx'
 import { createBrowserRouter, RouterProvider } from 'react-router-dom'
-import Navbar from './components/ui/navbar.jsx'
+import Navbar from './components/ui/Navbar.jsx'
 import Footer from './components/Footer.jsx'
 import ProtectedRoute from './components/ProtectedRoute.jsx'
 import { AuthProvider } from './contexts/AuthContext.jsx'

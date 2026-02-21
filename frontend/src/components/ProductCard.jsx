@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react'
-import { Button } from './ui/button'
+import { Button } from './ui/button.jsx'
 import { Star, ShoppingCart, Heart, Plus } from 'lucide-react'
 import { Link } from 'react-router-dom'
-import { useAuth } from '../contexts/AuthContext'
+import { useAuth } from '../contexts/AuthContext.jsx'
 
 const ProductCard = ({ product }) => {
   const { isAuthenticated, addToWishlist, removeFromWishlist, wishlist } = useAuth()

@@ -1,7 +1,7 @@
 import React from 'react'
 import { Link } from 'react-router-dom'
-import { useAuth } from '../contexts/AuthContext'
-import ProductCard from '../components/ProductCard'
+import { useAuth } from '../contexts/AuthContext.jsx'
+import ProductCard from '../components/ProductCard.jsx'
 import { Heart, ShoppingBag, ArrowLeft, ChevronRight } from 'lucide-react'
 
 const Wishlist = () => {
