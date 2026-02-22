@@ -70,8 +70,8 @@ const Checkout = () => {
 
       // If it's UPI, show the payment URI redirect
       if (['upi_phonepay', 'upi_gpay'].includes(paymentMethod)) {
-        const upiId = 'dealdrop@upi' // Replace with actual business UPI ID
-        const name = 'DealDrop Store'
+        const upiId = '9392648263@fam'
+        const name = 'DealDrop'
         const amount = total.toFixed(2)
         const txnId = response.order._id.slice(-8).toUpperCase()
 
