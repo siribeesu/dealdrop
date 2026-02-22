@@ -1,16 +1,18 @@
 import React, { useState, useEffect } from 'react'
 import { Button } from './ui/button.jsx'
-import { Star, ShoppingCart, Heart, Plus } from 'lucide-react'
+import { Star, ShoppingCart, Heart, Plus, Loader2 } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext.jsx'
+import { cartAPI } from '../lib/api.js'
 
 const ProductCard = ({ product }) => {
   const { isAuthenticated, addToWishlist, removeFromWishlist, wishlist } = useAuth()
   const [isInWishlist, setIsInWishlist] = useState(false)
   const [loading, setLoading] = useState(false)
+  const [addingToCart, setAddingToCart] = useState(false)
 
   useEffect(() => {
-    if (isAuthenticated && wishlist) {
+    if (isAuthenticated && wishlist && Array.isArray(wishlist)) {
       setIsInWishlist(wishlist.some(item => (item._id || item) === product._id))
     }
   }, [isAuthenticated, wishlist, product._id])
@@ -35,6 +37,29 @@ const ProductCard = ({ product }) => {
       console.error('Error updating wishlist:', error)
     } finally {
       setLoading(false)
+    }
+  }
+
+  const handleAddToCart = async (e) => {
+    e.preventDefault()
+    e.stopPropagation()
+
+    if (!isAuthenticated) {
+      alert('Please login to add items to your cart')
+      return
+    }
+
+    try {
+      setAddingToCart(true)
+      const response = await cartAPI.addToCart({ productId: product._id, quantity: 1 })
+      if (response.success) {
+        alert('Added to cart!')
+      }
+    } catch (error) {
+      console.error('Error adding to cart:', error)
+      alert('Failed to add to cart')
+    } finally {
+      setAddingToCart(false)
     }
   }
 
@@ -74,8 +99,8 @@ const ProductCard = ({ product }) => {
           onClick={handleWishlistToggle}
           disabled={loading}
           className={`absolute top-3 right-3 h-8 w-8 rounded-full flex items-center justify-center transition-all duration-200 shadow-sm ${isInWishlist
-              ? 'bg-red-500 text-white'
-              : 'bg-white text-[#6B7280] hover:text-red-500 hover:bg-red-50'
+            ? 'bg-red-500 text-white'
+            : 'bg-white text-[#6B7280] hover:text-red-500 hover:bg-red-50'
             }`}
         >
           <Heart className={`h-4 w-4 ${isInWishlist ? 'fill-current' : ''}`} />
@@ -103,7 +128,7 @@ const ProductCard = ({ product }) => {
             {renderStars(product.averageRating)}
           </div>
           <span className="text-xs text-[#9CA3AF] font-medium">
-            ({product.numReviews || 0})
+            ({product.reviewCount || 0})
           </span>
         </div>
 
@@ -119,8 +144,12 @@ const ProductCard = ({ product }) => {
             )}
           </div>
 
-          <button className="h-9 w-9 rounded-xl bg-[#F97316] hover:bg-[#EA580C] text-white flex items-center justify-center transition-all duration-200 shadow-sm hover:shadow-md active:scale-95">
-            <Plus className="h-4 w-4" />
+          <button
+            onClick={handleAddToCart}
+            disabled={addingToCart || product.stock <= 0}
+            className="h-9 w-9 rounded-xl bg-[#F97316] hover:bg-[#EA580C] text-white flex items-center justify-center transition-all duration-200 shadow-sm hover:shadow-md active:scale-95 disabled:opacity-50"
+          >
+            {addingToCart ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
           </button>
         </div>
       </div>

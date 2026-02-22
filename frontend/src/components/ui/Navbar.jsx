@@ -34,8 +34,8 @@ const Navbar = () => {
 
   return (
     <nav className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${isScrolled
-        ? 'bg-white shadow-[0_1px_3px_rgba(0,0,0,0.08)] border-b border-[#E5E7EB]'
-        : 'bg-[#1E3A8A]'
+      ? 'bg-white shadow-[0_1px_3px_rgba(0,0,0,0.08)] border-b border-[#E5E7EB]'
+      : 'bg-[#1E3A8A]'
       }`}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
@@ -62,8 +62,8 @@ const Navbar = () => {
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className={`w-48 lg:w-56 h-9 pl-9 pr-3 text-sm rounded-xl border transition-all duration-200 focus:w-64 focus:outline-none focus:ring-2 focus:ring-[#F97316]/40 ${isScrolled
-                    ? 'bg-[#F8FAFC] border-[#E5E7EB] text-[#1F2937] placeholder-[#9CA3AF]'
-                    : 'bg-white/10 border-white/20 text-white placeholder-white/60 focus:bg-white/20'
+                  ? 'bg-[#F8FAFC] border-[#E5E7EB] text-[#1F2937] placeholder-[#9CA3AF]'
+                  : 'bg-white/10 border-white/20 text-white placeholder-white/60 focus:bg-white/20'
                   }`}
               />
               <Search className={`absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 ${isScrolled ? 'text-[#9CA3AF]' : 'text-white/60'
@@ -81,14 +81,15 @@ const Navbar = () => {
               )}
             </Link>
 
-            {/* Cart */}
             <Link to="/cart" className={`relative p-2 rounded-xl transition-colors ${isScrolled ? 'text-[#1F2937] hover:bg-gray-100' : 'text-white hover:bg-white/10'
               }`}>
               <ShoppingCart className="h-5 w-5" />
-              <span className={`absolute -top-0.5 -right-0.5 h-4 w-4 text-white text-[10px] font-bold flex items-center justify-center rounded-full ${isScrolled ? 'bg-[#1E3A8A]' : 'bg-[#F97316]'
-                }`}>
-                0
-              </span>
+              {(user?.cart?.length > 0) && (
+                <span className={`absolute -top-0.5 -right-0.5 h-4 w-4 text-white text-[10px] font-bold flex items-center justify-center rounded-full ${isScrolled ? 'bg-[#1E3A8A]' : 'bg-[#F97316]'
+                  }`}>
+                  {user.cart.reduce((sum, item) => sum + (item.quantity || 1), 0)}
+                </span>
+              )}
             </Link>
 
             {/* Auth */}
@@ -133,8 +134,8 @@ const Navbar = () => {
             ) : (
               <Link to="/login">
                 <button className={`px-5 py-2 rounded-xl text-sm font-semibold transition-all duration-200 ${isScrolled
-                    ? 'bg-[#F97316] text-white hover:bg-[#EA580C] shadow-sm'
-                    : 'bg-white text-[#1E3A8A] hover:bg-gray-50'
+                  ? 'bg-[#F97316] text-white hover:bg-[#EA580C] shadow-sm'
+                  : 'bg-white text-[#1E3A8A] hover:bg-gray-50'
                   }`}>
                   Sign In
                 </button>
@@ -211,8 +212,8 @@ const NavLink = ({ to, label, active, isScrolled }) => (
   <Link
     to={to}
     className={`text-[15px] font-medium transition-colors duration-200 py-1 ${isScrolled
-        ? `${active ? 'text-[#1E3A8A] font-semibold' : 'text-[#6B7280] hover:text-[#1F2937]'}`
-        : `${active ? 'text-white font-semibold' : 'text-white/80 hover:text-white'}`
+      ? `${active ? 'text-[#1E3A8A] font-semibold' : 'text-[#6B7280] hover:text-[#1F2937]'}`
+      : `${active ? 'text-white font-semibold' : 'text-white/80 hover:text-white'}`
       }`}
   >
     {label}
@@ -224,8 +225,8 @@ const MobileLink = ({ to, label, onClick, highlight }) => (
     to={to}
     onClick={onClick}
     className={`block px-4 py-2.5 text-sm font-medium rounded-lg transition-colors ${highlight
-        ? 'text-[#1E3A8A] bg-blue-50 hover:bg-blue-100'
-        : 'text-[#1F2937] hover:bg-[#F8FAFC]'
+      ? 'text-[#1E3A8A] bg-blue-50 hover:bg-blue-100'
+      : 'text-[#1F2937] hover:bg-[#F8FAFC]'
       }`}
   >
     {label}
@@ -236,8 +237,8 @@ const DropdownLink = ({ to, icon, label, highlight }) => (
   <Link
     to={to}
     className={`flex items-center space-x-2.5 px-4 py-2 text-sm transition-colors ${highlight
-        ? 'text-[#1E3A8A] font-medium hover:bg-blue-50'
-        : 'text-[#6B7280] hover:text-[#1F2937] hover:bg-[#F8FAFC]'
+      ? 'text-[#1E3A8A] font-medium hover:bg-blue-50'
+      : 'text-[#6B7280] hover:text-[#1F2937] hover:bg-[#F8FAFC]'
       }`}
   >
     <span className={highlight ? 'text-[#1E3A8A]' : 'text-[#9CA3AF]'}>{icon}</span>

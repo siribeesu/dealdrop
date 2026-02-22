@@ -1,5 +1,4 @@
-const API_BASE_URL = import.meta.env.VITE_API_URL;
-console.log("API_BASE_URL:", API_BASE_URL); 
+const API_BASE_URL = import.meta.env.VITE_API_URL || (import.meta.env.PROD ? '/api' : 'http://localhost:5000/api');
 // Helper function to get auth token
 const getAuthToken = () => {
   return localStorage.getItem('token');
@@ -12,7 +11,7 @@ const apiRequest = async (endpoint, options = {}) => {
 
   const config = {
     headers: {
-      'Content-Type': 'application/json',
+      ...(options.body instanceof FormData ? {} : { 'Content-Type': 'application/json' }),
       ...(token && { Authorization: `Bearer ${token}` }),
       ...options.headers,
     },
@@ -128,14 +127,10 @@ export const productsAPI = {
   uploadImage: (file) => {
     const formData = new FormData();
     formData.append('image', file);
-    const token = getAuthToken();
-    return fetch(`${API_BASE_URL}/products/upload-image`, {
+    return apiRequest('/products/upload-image', {
       method: 'POST',
-      headers: {
-        ...(token && { Authorization: `Bearer ${token}` }),
-      },
       body: formData,
-    }).then(res => res.json());
+    });
   },
 
   uploadProductImage: (productId, formData) => apiRequest(`/products/${productId}/upload-image`, {

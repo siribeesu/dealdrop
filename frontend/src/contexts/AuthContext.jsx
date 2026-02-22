@@ -63,7 +63,15 @@ export const AuthProvider = ({ children }) => {
       const response = await authAPI.register(userData)
       return response
     } catch (error) {
-      return { success: false, message: 'Registration failed. Please try again.' }
+      console.error('Registration error:', error)
+      let message = error.data?.message || error.message || 'Registration failed. Please try again.'
+      if (error.data?.errors && Array.isArray(error.data.errors)) {
+        message = error.data.errors.map(err => typeof err === 'string' ? err : err.msg).join('. ')
+      }
+      return {
+        success: false,
+        message: message
+      }
     }
   }
 

@@ -148,10 +148,10 @@ const Checkout = () => {
                     icon={<CreditCard className="h-5 w-5" />}
                   />
                   <PaymentCard
-                    id="upi"
+                    id="upi_phonepay"
                     title="UPI / PhonePe"
-                    selected={paymentMethod === 'upi'}
-                    onClick={() => setPaymentMethod('upi')}
+                    selected={paymentMethod === 'upi_phonepay'}
+                    onClick={() => setPaymentMethod('upi_phonepay')}
                     icon={<Search className="h-5 w-5" />}
                   />
                 </div>
@@ -248,8 +248,8 @@ const PaymentCard = ({ id, title, selected, onClick, icon }) => (
   <div
     onClick={onClick}
     className={`p-4 rounded-xl border-2 cursor-pointer transition-all flex items-center justify-between ${selected
-        ? 'border-[#1E3A8A] bg-blue-50/50'
-        : 'border-[#E5E7EB] hover:border-[#1F2937]'
+      ? 'border-[#1E3A8A] bg-blue-50/50'
+      : 'border-[#E5E7EB] hover:border-[#1F2937]'
       }`}
   >
     <div className="flex items-center gap-3">

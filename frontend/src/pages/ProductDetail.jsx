@@ -65,13 +65,18 @@ const ProductDetail = () => {
   }
 
   const handleAddToCart = async () => {
+    if (!isAuthenticated) {
+      alert('Please login to add items to your cart')
+      return
+    }
+
     try {
       setAddingToCart(true)
       const response = await cartAPI.addToCart({ productId: product._id, quantity })
       if (response.success) {
         alert('Product added to cart successfully!')
       } else {
-        alert('Failed to add product to cart.')
+        alert(response.message || 'Failed to add product to cart.')
       }
     } catch (error) {
       alert('Error adding to cart.')
@@ -151,11 +156,11 @@ const ProductDetail = () => {
               <div className="flex items-center gap-4 mb-6">
                 <div className="flex items-center gap-1">
                   {[...Array(5)].map((_, i) => (
-                    <Star key={i} className={`h-4 w-4 ${i < 4 ? 'fill-amber-400 text-amber-400' : 'text-gray-200'}`} />
+                    <Star key={i} className={`h-4 w-4 ${i < Math.round(product.averageRating || 0) ? 'fill-amber-400 text-amber-400' : 'text-gray-200'}`} />
                   ))}
                 </div>
                 <span className="text-sm font-medium text-[#6B7280]">
-                  (12 customer reviews)
+                  ({product.reviewCount || 0} customer reviews)
                 </span>
                 <span className="h-4 w-[1px] bg-[#E5E7EB]"></span>
                 <span className={`text-sm font-bold ${product.stock > 0 ? 'text-[#16A34A]' : 'text-red-500'}`}>
@@ -207,8 +212,8 @@ const ProductDetail = () => {
                   <button
                     onClick={handleWishlistToggle}
                     className={`h-12 w-12 flex items-center justify-center rounded-xl border transition-all ${isInWishlist
-                        ? 'bg-red-50 border-red-100 text-red-500'
-                        : 'bg-white border-[#E5E7EB] text-[#6B7280] hover:border-[#1F2937]'
+                      ? 'bg-red-50 border-red-100 text-red-500'
+                      : 'bg-white border-[#E5E7EB] text-[#6B7280] hover:border-[#1F2937]'
                       }`}
                   >
                     <Heart className={`h-5 w-5 ${isInWishlist ? 'fill-current' : ''}`} />
@@ -271,7 +276,7 @@ const ProductDetail = () => {
               className={`pb-4 px-6 text-sm font-bold tracking-tight transition-all relative ${activeTab === 'reviews' ? 'text-[#1E3A8A]' : 'text-[#6B7280] hover:text-[#1F2937]'
                 }`}
             >
-              Reviews (12)
+              Reviews ({product.reviewCount || 0})
               {activeTab === 'reviews' && (
                 <span className="absolute bottom-0 left-0 w-full h-1 bg-[#1E3A8A] rounded-t-full"></span>
               )}

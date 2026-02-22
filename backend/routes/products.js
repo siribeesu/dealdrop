@@ -176,7 +176,7 @@ router.post('/upload-image', protect, authorize('admin'), uploadSingle, handleUp
       });
     }
 
-    const imageUrl = `${req.protocol}://${req.get('host')}/uploads/${req.file.filename}`;
+    const imageUrl = req.file.path;
 
     res.json({
       success: true,
@@ -250,7 +250,17 @@ router.post('/', protect, authorize('admin'), [
       product
     });
   } catch (error) {
-    console.error('Product creation error:', error);
+    console.error('Product creation error details:', error);
+
+    // Handle Duplicate Key Error (Unique Index)
+    if (error.code === 11000) {
+      return res.status(400).json({
+        success: false,
+        message: 'A product with this name or slug already exists.',
+        error: error.message
+      });
+    }
+
     if (error.name === 'ValidationError') {
       const errors = Object.values(error.errors).map(err => err.message);
       return res.status(400).json({
@@ -261,7 +271,8 @@ router.post('/', protect, authorize('admin'), [
     }
     res.status(500).json({
       success: false,
-      message: 'Server error'
+      message: 'Server error',
+      error: error.message
     });
   }
 });
@@ -296,10 +307,42 @@ router.put('/:id', protect, authorize('admin'), [
       });
     }
 
-    // Update product
-    Object.keys(req.body).forEach(key => {
-      if (req.body[key] !== undefined) {
-        product[key] = req.body[key];
+    // Update product fields
+    if (req.body.name) product.name = req.body.name;
+    if (req.body.description) product.description = req.body.description;
+    if (req.body.price) product.price = req.body.price;
+    if (req.body.category) product.category = req.body.category;
+    if (req.body.brand) product.brand = req.body.brand;
+    if (req.body.subcategory) product.subcategory = req.body.subcategory;
+
+    // Handle stock/inventory
+    if (req.body.stock !== undefined) {
+      product.inventory = {
+        ...product.inventory,
+        quantity: parseInt(req.body.stock) || 0,
+        trackInventory: true
+      };
+    }
+
+    // Handle images array (convert strings to objects)
+    if (req.body.images && Array.isArray(req.body.images)) {
+      product.images = req.body.images.map((img, index) => {
+        if (typeof img === 'string') {
+          return {
+            url: img,
+            alt: req.body.name || product.name,
+            isPrimary: index === 0
+          };
+        }
+        return img; // Already an object
+      });
+    }
+
+    // Handle other fields
+    const otherFields = ['featured', 'status', 'onSale', 'discountPercentage', 'tags'];
+    otherFields.forEach(field => {
+      if (req.body[field] !== undefined) {
+        product[field] = req.body[field];
       }
     });
 
@@ -363,7 +406,7 @@ router.post('/:id/upload-image', protect, authorize('admin'), uploadSingle, hand
     }
 
     // Add image URL to product
-    const imageUrl = `${req.protocol}://${req.get('host')}/uploads/${req.file.filename}`;
+    const imageUrl = req.file.path;
     product.images.push({
       url: imageUrl,
       alt: req.body.alt || product.name,

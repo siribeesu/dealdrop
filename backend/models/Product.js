@@ -194,7 +194,7 @@ productSchema.index({ featured: 1 });
 productSchema.index({ createdAt: -1 });
 
 // Virtual for discount price
-productSchema.virtual('discountPrice').get(function() {
+productSchema.virtual('discountPrice').get(function () {
   if (this.onSale && this.discountPercentage) {
     return this.price * (1 - this.discountPercentage / 100);
   }
@@ -202,25 +202,36 @@ productSchema.virtual('discountPrice').get(function() {
 });
 
 // Virtual for primary image
-productSchema.virtual('primaryImage').get(function() {
+productSchema.virtual('primaryImage').get(function () {
   return this.images.find(img => img.isPrimary) || this.images[0];
 });
 
 // Pre-save middleware to generate slug
-productSchema.pre('save', function(next) {
+productSchema.pre('save', async function (next) {
   if (this.isModified('name') && !this.seo.slug) {
-    this.seo.slug = this.name.toLowerCase().replace(/[^a-zA-Z0-9]/g, '-').replace(/-+/g, '-').trim('-');
+    let slug = this.name.toLowerCase()
+      .replace(/[^a-zA-Z0-9]/g, '-')
+      .replace(/-+/g, '-')
+      .replace(/^-+|-+$/g, '');
+
+    // Check if slug already exists
+    const slugExists = await mongoose.models.Product.findOne({ 'seo.slug': slug });
+    if (slugExists) {
+      slug = `${slug}-${Math.floor(1000 + Math.random() * 9000)}`;
+    }
+
+    this.seo.slug = slug;
   }
   next();
 });
 
 // Instance method to check if product is available
-productSchema.methods.isAvailable = function(quantity = 1) {
+productSchema.methods.isAvailable = function (quantity = 1) {
   return this.status === 'active' && (!this.inventory.trackInventory || this.inventory.quantity >= quantity);
 };
 
 // Instance method to update inventory
-productSchema.methods.updateInventory = function(quantity) {
+productSchema.methods.updateInventory = function (quantity) {
   if (this.inventory.trackInventory) {
     this.inventory.quantity = Math.max(0, this.inventory.quantity + quantity);
   }
@@ -228,7 +239,7 @@ productSchema.methods.updateInventory = function(quantity) {
 };
 
 // Instance method to add review
-productSchema.methods.addReview = function(reviewData) {
+productSchema.methods.addReview = function (reviewData) {
   this.reviews.push(reviewData);
   this.reviewCount = this.reviews.length;
   this.averageRating = this.reviews.reduce((sum, review) => sum + review.rating, 0) / this.reviewCount;
@@ -236,27 +247,27 @@ productSchema.methods.addReview = function(reviewData) {
 };
 
 // Static method to get featured products
-productSchema.statics.getFeatured = function(limit = 10) {
+productSchema.statics.getFeatured = function (limit = 10) {
   return this.find({ featured: true, status: 'active' })
     .sort({ createdAt: -1 })
     .limit(limit);
 };
 
 // Static method to get products by category
-productSchema.statics.getByCategory = function(category, limit = 20) {
+productSchema.statics.getByCategory = function (category, limit = 20) {
   return this.find({ category, status: 'active' })
     .sort({ createdAt: -1 })
     .limit(limit);
 };
 
 // Static method to search products
-productSchema.statics.search = function(query, limit = 20) {
+productSchema.statics.search = function (query, limit = 20) {
   return this.find(
     { $text: { $search: query }, status: 'active' },
     { score: { $meta: 'textScore' } }
   )
-  .sort({ score: { $meta: 'textScore' } })
-  .limit(limit);
+    .sort({ score: { $meta: 'textScore' } })
+    .limit(limit);
 };
 
 module.exports = mongoose.model('Product', productSchema);
