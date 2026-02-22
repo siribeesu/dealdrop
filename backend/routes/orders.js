@@ -48,6 +48,9 @@ router.post('/', protect, [
     for (const cartItem of user.cart) {
       const product = cartItem.product;
 
+      // Skip products that were deleted from the database
+      if (!product) continue;
+
       if (!product.isAvailable(cartItem.quantity)) {
         return res.status(400).json({
           success: false,
@@ -103,10 +106,11 @@ router.post('/', protect, [
       order
     });
   } catch (error) {
-    console.error(error);
+    console.error('Order Creation Error:', error);
     res.status(500).json({
       success: false,
-      message: 'Server error'
+      message: 'Server error during order creation',
+      error: error.message
     });
   }
 });
