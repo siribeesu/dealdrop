@@ -43,6 +43,14 @@ router.post('/register', [
         const verificationToken = existingUser.generateVerificationToken();
         await existingUser.save();
 
+        // Check if email env vars are set
+        if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
+          return res.status(500).json({
+            success: false,
+            message: 'Email configuration is missing on the server. Please add EMAIL_USER and EMAIL_PASS variables.'
+          });
+        }
+
         const verificationUrl = `${process.env.FRONTEND_URL}/verify/${verificationToken}`;
         const message = `Please click the link below to verify your email:\n\n${verificationUrl}`;
 
@@ -187,7 +195,7 @@ router.post('/login', [
     const token = jwt.sign(
       { id: user._id, role: user.role },
       process.env.JWT_SECRET,
-      { expiresIn: process.env.JWT_EXPIRE }
+      { expiresIn: process.env.JWT_EXPIRE || '7d' }
     );
 
     res.json({
