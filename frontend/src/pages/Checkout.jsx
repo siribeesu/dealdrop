@@ -56,10 +56,8 @@ const Checkout = () => {
 
       // For direct UPI, we'll create the order with a 'pending_verification' status
       const orderData = {
-        shippingAddress: formData,
+        shippingAddress: { ...formData, country: 'India' },
         paymentMethod: paymentMethod,
-        // If it's a UPI payment, we might want to store more info, 
-        // but for now let's just create the order.
       }
 
       const response = await ordersAPI.createOrder(orderData)

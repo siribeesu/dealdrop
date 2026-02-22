@@ -39,17 +39,9 @@ router.post('/register', [
           message: 'User with this email already exists'
         });
       } else {
-        // Smart Registration: If user exists but is NOT verified, resend verification email
+        // Unverified user: try to resend verification email
         const verificationToken = existingUser.generateVerificationToken();
         await existingUser.save();
-
-        // Check if email env vars are set
-        if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
-          return res.status(500).json({
-            success: false,
-            message: 'Email configuration is missing on the server. Please add EMAIL_USER and EMAIL_PASS variables.'
-          });
-        }
 
         const verificationUrl = `${process.env.FRONTEND_URL}/verify/${verificationToken}`;
         const message = `Please click the link below to verify your email:\n\n${verificationUrl}`;
@@ -62,7 +54,7 @@ router.post('/register', [
             html: `
               <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
                 <h2>Email Verification Required</h2>
-                <p>It seems you previously tried to register with this email but Haven't verified it yet.</p>
+                <p>It seems you previously tried to register with this email but haven't verified it yet.</p>
                 <p>Please click the button below to verify your email address and activate your account:</p>
                 <a href="${verificationUrl}" style="background-color: #007bff; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; display: inline-block;">Verify Email</a>
                 <p>This link will expire in 24 hours.</p>
@@ -71,14 +63,18 @@ router.post('/register', [
           });
           return res.status(200).json({
             success: true,
-            message: 'User already exists but is unverified. A new verification email has been sent.'
+            message: 'A new verification email has been sent. Please check your inbox.'
           });
-        } catch (error) {
-          console.error('Email sending failed:', error);
-          return res.status(500).json({
-            success: false,
-            message: 'User already exists but is unverified. We tried to resend the email but failed.',
-            error: error.message
+        } catch (emailError) {
+          console.error('Email sending failed, auto-verifying user:', emailError.message);
+          // Email failed (e.g. Render blocking SMTP) — auto-verify so user can login
+          existingUser.isVerified = true;
+          existingUser.verificationToken = undefined;
+          existingUser.verificationTokenExpire = undefined;
+          await existingUser.save();
+          return res.status(200).json({
+            success: true,
+            message: 'Email service unavailable. Your account has been verified automatically. Please login.'
           });
         }
       }
