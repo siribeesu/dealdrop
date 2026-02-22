@@ -69,7 +69,8 @@ router.post('/register', [
           console.error('Email sending failed:', error);
           return res.status(500).json({
             success: false,
-            message: 'User already exists but is unverified. We tried to resend the email but failed. Please check your SMTP settings.'
+            message: 'User already exists but is unverified. We tried to resend the email but failed.',
+            error: error.message
           });
         }
       }
