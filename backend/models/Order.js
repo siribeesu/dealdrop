@@ -71,7 +71,7 @@ const orderSchema = new mongoose.Schema({
     country: {
       type: String,
       required: [true, 'Country is required'],
-      default: 'USA'
+      default: 'India'
     }
   },
   billingAddress: {
@@ -85,13 +85,13 @@ const orderSchema = new mongoose.Schema({
     zipCode: String,
     country: {
       type: String,
-      default: 'USA'
+      default: 'India'
     }
   },
   paymentMethod: {
     type: String,
     required: [true, 'Payment method is required'],
-    enum: ['card', 'paypal', 'bank_transfer'],
+    enum: ['card', 'paypal', 'bank_transfer', 'upi_phonepay', 'upi_gpay'],
     default: 'card'
   },
   paymentStatus: {

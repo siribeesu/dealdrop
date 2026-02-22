@@ -1,43 +1,35 @@
-const nodemailer = require('nodemailer');
+const { Resend } = require('resend');
 
-// Create transporter
-const transporter = nodemailer.createTransport({
-  host: 'smtp.gmail.com',
-  port: 587,
-  secure: false, // true for 465, false for other ports
-  requireTLS: true,
-  auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASS
-  },
-  tls: {
-    ciphers: 'SSLv3',
-    rejectUnauthorized: false
-  },
-  connectionTimeout: 10000, // 10 seconds
-  greetingTimeout: 10000,
-  socketTimeout: 20000
-});
-
-// Send email function
+/**
+ * Send email using Resend (Most reliable for Render/Cloud)
+ * @param {Object} options - { email, subject, message, html }
+ */
 const sendEmail = async (options) => {
-  // Email options
-  const mailOptions = {
-    from: `${process.env.FROM_NAME || 'DealDrop'} <${process.env.FROM_EMAIL || process.env.EMAIL_USER}>`,
-    to: options.email,
-    subject: options.subject,
-    text: options.message,
-    html: options.html
-  };
-
-  // Send email
   try {
-    const info = await transporter.sendMail(mailOptions);
-    console.log('Email successfully sent:', info.response);
-    return info;
+    // If RESEND_API_KEY is not set, we'll log it (helps user debug)
+    if (!process.env.RESEND_API_KEY) {
+      console.error('❌ RESEND_API_KEY is missing in environment variables');
+      throw new Error('Email service not configured. Please add RESEND_API_KEY.');
+    }
+
+    const resend = new Resend(process.env.RESEND_API_KEY);
+
+    const data = await resend.emails.send({
+      from: 'DealDrop <onboarding@resend.dev>', // You can change this once you verify your domain
+      to: options.email,
+      subject: options.subject,
+      text: options.message,
+      html: options.html,
+    });
+
+    if (data.error) {
+      console.error('❌ Resend Error:', data.error);
+      throw new Error(data.error.message);
+    }
+
+    return data;
   } catch (error) {
-    console.error('CRITICAL: Email delivery failed');
-    console.error('Error details:', error.message);
+    console.error('❌ Email sending failed:', error.message);
     throw error;
   }
 };
