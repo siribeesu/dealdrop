@@ -127,10 +127,11 @@ router.post('/register', [
       }
     });
   } catch (error) {
-    console.error(error);
+    console.error('Auth Route Error:', error);
     res.status(500).json({
       success: false,
-      message: 'Server error'
+      message: 'Server error',
+      error: error.message
     });
   }
 });
@@ -202,10 +203,11 @@ router.post('/login', [
       }
     });
   } catch (error) {
-    console.error(error);
+    console.error('Auth Route Error:', error);
     res.status(500).json({
       success: false,
-      message: 'Server error'
+      message: 'Server error',
+      error: error.message
     });
   }
 });
