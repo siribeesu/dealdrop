@@ -63,8 +63,9 @@ const Cart = () => {
     }
   }
 
-  const subtotal = cartItems.reduce((sum, item) => sum + (item.product.price * item.quantity), 0)
-  const savings = cartItems.reduce((sum, item) => {
+  const validCartItems = cartItems.filter(item => item.product !== null);
+  const subtotal = validCartItems.reduce((sum, item) => sum + (item.product.price * item.quantity), 0)
+  const savings = validCartItems.reduce((sum, item) => {
     const original = item.product.originalPrice || item.product.price
     return sum + ((original - item.product.price) * item.quantity)
   }, 0)
@@ -121,7 +122,7 @@ const Cart = () => {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
           {/* Cart Items */}
           <div className="lg:col-span-2 space-y-4">
-            {cartItems.map((item) => (
+            {validCartItems.map((item) => (
               <div key={item.product._id} className="bg-white rounded-2xl p-4 sm:p-6 border border-[#E5E7EB] shadow-sm flex flex-col sm:flex-row items-center gap-6 group transition-all hover:shadow-md">
                 <div className="h-24 w-24 sm:h-32 sm:w-32 rounded-xl overflow-hidden bg-[#F8FAFC] border border-[#F1F5F9] shrink-0">
                   <img
