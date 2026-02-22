@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { Truck, CreditCard, ShieldCheck, Loader2, ArrowLeft, ChevronRight, Lock, MapPin, Search } from 'lucide-react'
 import { Link, useNavigate } from 'react-router-dom'
-import { cartAPI, ordersAPI } from '../lib/api.js'
+import { cartAPI, ordersAPI, paymentsAPI } from '../lib/api.js'
 
 const Checkout = () => {
   const [formData, setFormData] = useState({
@@ -48,22 +48,95 @@ const Checkout = () => {
     setFormData(prev => ({ ...prev, [name]: value }))
   }
 
+  const loadRazorpay = () => {
+    return new Promise((resolve) => {
+      const script = document.createElement('script')
+      script.src = 'https://checkout.razorpay.com/v1/checkout.js'
+      script.onload = () => resolve(true)
+      script.onerror = () => resolve(false)
+      document.body.appendChild(script)
+    })
+  }
+
   const handleSubmit = async (e) => {
     e.preventDefault()
     try {
       setSubmitting(true)
+      setError('')
+
+      // 1. Create Order in our DB first (status: pending)
       const orderData = {
         shippingAddress: formData,
         paymentMethod: paymentMethod
       }
       const response = await ordersAPI.createOrder(orderData)
-      if (response.success) {
-        navigate('/orders')
+
+      if (!response.success) {
+        throw new Error(response.message || 'Failed to place order.')
+      }
+
+      const orderId = response.order._id
+
+      // 2. If UPI/PhonePe/GPay, trigger Razorpay
+      if (['upi_phonepay', 'upi_gpay'].includes(paymentMethod)) {
+        const res = await loadRazorpay()
+        if (!res) {
+          throw new Error('Razorpay SDK failed to load. Are you online?')
+        }
+
+        // Create Razorpay Order on server
+        const rzpResponse = await paymentsAPI.createRazorpayOrder({
+          amount: total,
+          currency: 'INR',
+          receipt: `receipt_${orderId}`
+        })
+
+        if (!rzpResponse.success) {
+          throw new Error('Failed to initiate Razorpay payment')
+        }
+
+        const options = {
+          key: import.meta.env.VITE_RAZORPAY_KEY_ID || 'rzp_test_placeholder',
+          amount: rzpResponse.order.amount,
+          currency: rzpResponse.order.currency,
+          name: 'DealDrop',
+          description: 'Payment for your order',
+          order_id: rzpResponse.order.id,
+          handler: async (response) => {
+            try {
+              const verifyRes = await paymentsAPI.verifyRazorpayPayment({
+                ...response,
+                orderId
+              })
+              if (verifyRes.success) {
+                navigate('/orders')
+              } else {
+                setError('Payment verification failed. Please contact support.')
+              }
+            } catch (err) {
+              setError('Error verifying payment.')
+            }
+          },
+          prefill: {
+            name: `${formData.firstName} ${formData.lastName}`,
+            email: formData.email,
+            contact: formData.phone
+          },
+          theme: { color: '#1E3A8A' }
+        }
+
+        const rzp1 = new window.Razorpay(options)
+        rzp1.on('payment.failed', function (response) {
+          setError(response.error.description)
+        })
+        rzp1.open()
       } else {
-        setError(response.message || 'Failed to place order.')
+        // Handle regular card payment (Stripe or just success if simulation)
+        navigate('/orders')
       }
     } catch (error) {
-      setError('Internal server error.')
+      console.error('Checkout error:', error)
+      setError(error.message || 'Internal server error.')
     } finally {
       setSubmitting(false)
     }
@@ -149,10 +222,17 @@ const Checkout = () => {
                   />
                   <PaymentCard
                     id="upi_phonepay"
-                    title="UPI / PhonePe"
+                    title="PhonePe / UPI"
                     selected={paymentMethod === 'upi_phonepay'}
                     onClick={() => setPaymentMethod('upi_phonepay')}
-                    icon={<Search className="h-5 w-5" />}
+                    icon={<img src="https://img.icons8.com/color/48/phone-pe.png" className="h-6 w-6" alt="PhonePe" />}
+                  />
+                  <PaymentCard
+                    id="upi_gpay"
+                    title="Google Pay"
+                    selected={paymentMethod === 'upi_gpay'}
+                    onClick={() => setPaymentMethod('upi_gpay')}
+                    icon={<img src="https://img.icons8.com/color/48/google-pay.png" className="h-6 w-6" alt="GPay" />}
                   />
                 </div>
               </div>

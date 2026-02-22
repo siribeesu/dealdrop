@@ -92,15 +92,37 @@ const AdminDashboard = () => {
         if (response.success) {
           const url = response.url
           if (editingProduct) {
-            const currentImgs = editingProduct.images?.map(img => typeof img === 'string' ? img : (img.url || '')) || []
-            setEditingProduct({ ...editingProduct, images: currentImgs[0] === '' ? [url] : [...currentImgs, url] })
+            setEditingProduct(prev => {
+              const currentImgs = prev.images?.map(img => typeof img === 'string' ? img : (img.url || '')) || []
+              return { ...prev, images: currentImgs.filter(i => i !== '')[0] ? [...currentImgs, url] : [url] }
+            })
           } else {
-            const currentImgs = newProduct.images || ['']
-            setNewProduct({ ...newProduct, images: currentImgs[0] === '' ? [url] : [...currentImgs, url] })
+            setNewProduct(prev => {
+              const currentImgs = prev.images || []
+              return { ...prev, images: currentImgs.filter(i => i !== '')[0] ? [...currentImgs, url] : [url] }
+            })
           }
         }
       }
-    } catch (err) { alert('Upload failed') } finally { setUploading(false); e.target.value = '' }
+    } catch (err) {
+      console.error('Upload failed:', err)
+      alert('Upload failed')
+    } finally {
+      setUploading(false)
+      e.target.value = ''
+    }
+  }
+
+  const removeImage = (index) => {
+    if (editingProduct) {
+      const newImgs = [...editingProduct.images]
+      newImgs.splice(index, 1)
+      setEditingProduct({ ...editingProduct, images: newImgs })
+    } else {
+      const newImgs = [...newProduct.images]
+      newImgs.splice(index, 1)
+      setNewProduct({ ...newProduct, images: newImgs })
+    }
   }
 
   const handleCreateOrUpdate = async (e) => {
@@ -445,10 +467,17 @@ const AdminDashboard = () => {
                       <input type="file" multiple onChange={handleImageUpload} className="hidden" />
                     </label>
                   </div>
-                  <div className="flex gap-2 mt-4 overflow-x-auto pb-2">
-                    {(editingProduct ? editingProduct.images : newProduct.images)?.map((img, i) => (
-                      <div key={i} className="h-16 w-16 rounded-lg border border-slate-100 overflow-hidden shrink-0">
+                  <div className="flex flex-wrap gap-4 mt-4 overflow-x-auto pb-2">
+                    {(editingProduct ? editingProduct.images : newProduct.images)?.filter(img => img && img !== '').map((img, i) => (
+                      <div key={i} className="relative h-20 w-20 rounded-xl border-2 border-[#F1F5F9] overflow-hidden shrink-0 group shadow-sm">
                         <img src={img} className="h-full w-full object-cover" />
+                        <button
+                          type="button"
+                          onClick={() => removeImage(i)}
+                          className="absolute inset-0 bg-red-500/80 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-200"
+                        >
+                          <Trash2 size={16} />
+                        </button>
                       </div>
                     ))}
                   </div>

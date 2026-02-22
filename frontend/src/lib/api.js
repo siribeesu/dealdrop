@@ -231,6 +231,19 @@ export const adminAPI = {
   }),
 };
 
+// Payments API
+export const paymentsAPI = {
+  createRazorpayOrder: (orderData) => apiRequest('/payments/razorpay/order', {
+    method: 'POST',
+    body: JSON.stringify(orderData),
+  }),
+
+  verifyRazorpayPayment: (verificationData) => apiRequest('/payments/razorpay/verify', {
+    method: 'POST',
+    body: JSON.stringify(verificationData),
+  }),
+};
+
 // Health check
 export const healthAPI = {
   check: () => apiRequest('/health'),
