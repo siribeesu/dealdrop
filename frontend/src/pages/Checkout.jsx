@@ -105,7 +105,8 @@ const Checkout = () => {
     }
   }
 
-  const subtotal = cartItems.reduce((sum, item) => sum + (item.product.price * item.quantity), 0)
+  const validCartItems = cartItems.filter(item => item.product !== null)
+  const subtotal = validCartItems.reduce((sum, item) => sum + (item.product.price * item.quantity), 0)
   const shipping = subtotal > 499 ? 0 : 40
   const total = subtotal + shipping
 
@@ -214,7 +215,7 @@ const Checkout = () => {
                 </h2>
 
                 <div className="space-y-4 mb-8 max-h-[200px] overflow-y-auto pr-2 custom-scrollbar">
-                  {cartItems.map((item) => (
+                  {validCartItems.map((item) => (
                     <div key={item.product._id} className="flex justify-between items-start gap-4">
                       <div className="flex gap-3">
                         <div className="h-12 w-12 bg-white/10 rounded-lg overflow-hidden shrink-0 border border-white/10">
