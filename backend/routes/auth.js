@@ -39,44 +39,15 @@ router.post('/register', [
           message: 'User with this email already exists'
         });
       } else {
-        // Unverified user: try to resend verification email
-        const verificationToken = existingUser.generateVerificationToken();
+        // Unverified existing user: just auto-verify and let them login
+        existingUser.isVerified = true;
+        existingUser.verificationToken = undefined;
+        existingUser.verificationTokenExpire = undefined;
         await existingUser.save();
-
-        const verificationUrl = `${process.env.FRONTEND_URL}/verify/${verificationToken}`;
-        const message = `Please click the link below to verify your email:\n\n${verificationUrl}`;
-
-        try {
-          await sendEmail({
-            email: existingUser.email,
-            subject: 'Email Verification - DealDrop',
-            message,
-            html: `
-              <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-                <h2>Email Verification Required</h2>
-                <p>It seems you previously tried to register with this email but haven't verified it yet.</p>
-                <p>Please click the button below to verify your email address and activate your account:</p>
-                <a href="${verificationUrl}" style="background-color: #007bff; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; display: inline-block;">Verify Email</a>
-                <p>This link will expire in 24 hours.</p>
-              </div>
-            `
-          });
-          return res.status(200).json({
-            success: true,
-            message: 'A new verification email has been sent. Please check your inbox.'
-          });
-        } catch (emailError) {
-          console.error('Email sending failed, auto-verifying user:', emailError.message);
-          // Email failed (e.g. Render blocking SMTP) — auto-verify so user can login
-          existingUser.isVerified = true;
-          existingUser.verificationToken = undefined;
-          existingUser.verificationTokenExpire = undefined;
-          await existingUser.save();
-          return res.status(200).json({
-            success: true,
-            message: 'Email service unavailable. Your account has been verified automatically. Please login.'
-          });
-        }
+        return res.status(200).json({
+          success: true,
+          message: 'Your account is now verified. Please login.'
+        });
       }
     }
 
@@ -88,47 +59,19 @@ router.post('/register', [
       password
     });
 
-    // Generate verification token
-    const verificationToken = user.generateVerificationToken();
+    // Auto-verify user immediately (email verification skipped until domain is set up)
+    user.isVerified = true;
     await user.save();
-
-    // Send verification email
-    const verificationUrl = `${process.env.FRONTEND_URL}/verify/${verificationToken}`;
-    const message = `Please click the link below to verify your email:\n\n${verificationUrl}`;
-
-    let emailSent = true;
-    try {
-      await sendEmail({
-        email: user.email,
-        subject: 'Email Verification - DealDrop',
-        message,
-        html: `
-          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-            <h2>Welcome to DealDrop!</h2>
-            <p>Please click the button below to verify your email address:</p>
-            <a href="${verificationUrl}" style="background-color: #007bff; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; display: inline-block;">Verify Email</a>
-            <p>If the button doesn't work, copy and paste this link into your browser:</p>
-            <p>${verificationUrl}</p>
-            <p>This link will expire in 24 hours.</p>
-          </div>
-        `
-      });
-    } catch (error) {
-      console.error('Email sending failed:', error);
-      emailSent = false;
-    }
 
     res.status(201).json({
       success: true,
-      message: emailSent
-        ? 'User registered successfully. Please check your email to verify your account.'
-        : 'User registered, but verification email could not be sent. Please contact support or try logging in later.',
+      message: 'Account created successfully! You can now login.',
       user: {
         id: user._id,
         firstName: user.firstName,
         lastName: user.lastName,
         email: user.email,
-        isVerified: user.isVerified
+        isVerified: true
       }
     });
   } catch (error) {
