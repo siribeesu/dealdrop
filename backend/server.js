@@ -71,7 +71,6 @@ app.use('/api/auth', authRoutes);
 app.use('/api/products', productRoutes);
 app.use('/api/cart', protect, cartRoutes);
 app.use('/api/orders', orderRoutes);
-app.use('/api/payments', require('./routes/payments'));
 app.use('/api/admin', adminRoutes);
 app.use('/api/webhooks', webhookRoutes);
 

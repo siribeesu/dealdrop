@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { Truck, CreditCard, ShieldCheck, Loader2, ArrowLeft, ChevronRight, Lock, MapPin, Search } from 'lucide-react'
 import { Link, useNavigate } from 'react-router-dom'
-import { cartAPI, ordersAPI, paymentsAPI } from '../lib/api.js'
+import { cartAPI, ordersAPI } from '../lib/api.js'
 
 const Checkout = () => {
   const [formData, setFormData] = useState({
@@ -48,90 +48,53 @@ const Checkout = () => {
     setFormData(prev => ({ ...prev, [name]: value }))
   }
 
-  const loadRazorpay = () => {
-    return new Promise((resolve) => {
-      const script = document.createElement('script')
-      script.src = 'https://checkout.razorpay.com/v1/checkout.js'
-      script.onload = () => resolve(true)
-      script.onerror = () => resolve(false)
-      document.body.appendChild(script)
-    })
-  }
-
   const handleSubmit = async (e) => {
     e.preventDefault()
     try {
       setSubmitting(true)
       setError('')
 
-      // 1. Create Order in our DB first (status: pending)
+      // For direct UPI, we'll create the order with a 'pending_verification' status
       const orderData = {
         shippingAddress: formData,
-        paymentMethod: paymentMethod
+        paymentMethod: paymentMethod,
+        // If it's a UPI payment, we might want to store more info, 
+        // but for now let's just create the order.
       }
+
       const response = await ordersAPI.createOrder(orderData)
 
       if (!response.success) {
         throw new Error(response.message || 'Failed to place order.')
       }
 
-      const orderId = response.order._id
-
-      // 2. If UPI/PhonePe/GPay, trigger Razorpay
+      // If it's UPI, show the payment URI redirect
       if (['upi_phonepay', 'upi_gpay'].includes(paymentMethod)) {
-        const res = await loadRazorpay()
-        if (!res) {
-          throw new Error('Razorpay SDK failed to load. Are you online?')
+        const upiId = 'dealdrop@upi' // Replace with actual business UPI ID
+        const name = 'DealDrop Store'
+        const amount = total.toFixed(2)
+        const txnId = response.order._id.slice(-8).toUpperCase()
+
+        // Construct UPI URI
+        const upiUri = `upi://pay?pa=${upiId}&pn=${encodeURIComponent(name)}&am=${amount}&tr=${txnId}&cu=INR`
+
+        // Check if mobile
+        const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent)
+
+        if (isMobile) {
+          // Attempt to open UPI app directly
+          window.location.href = upiUri
+
+          // Give them some time before navigating to orders
+          setTimeout(() => {
+            navigate('/orders')
+          }, 2000)
+        } else {
+          // On desktop, show a message with UPI ID and Order Ref
+          alert(`Please pay ₹${amount} to UPI ID: ${upiId}\nReference: ${txnId}\n\nYour order is placed and will be verified manually.`)
+          navigate('/orders')
         }
-
-        // Create Razorpay Order on server
-        const rzpResponse = await paymentsAPI.createRazorpayOrder({
-          amount: total,
-          currency: 'INR',
-          receipt: `receipt_${orderId}`
-        })
-
-        if (!rzpResponse.success) {
-          throw new Error('Failed to initiate Razorpay payment')
-        }
-
-        const options = {
-          key: import.meta.env.VITE_RAZORPAY_KEY_ID || 'rzp_test_placeholder',
-          amount: rzpResponse.order.amount,
-          currency: rzpResponse.order.currency,
-          name: 'DealDrop',
-          description: 'Payment for your order',
-          order_id: rzpResponse.order.id,
-          handler: async (response) => {
-            try {
-              const verifyRes = await paymentsAPI.verifyRazorpayPayment({
-                ...response,
-                orderId
-              })
-              if (verifyRes.success) {
-                navigate('/orders')
-              } else {
-                setError('Payment verification failed. Please contact support.')
-              }
-            } catch (err) {
-              setError('Error verifying payment.')
-            }
-          },
-          prefill: {
-            name: `${formData.firstName} ${formData.lastName}`,
-            email: formData.email,
-            contact: formData.phone
-          },
-          theme: { color: '#1E3A8A' }
-        }
-
-        const rzp1 = new window.Razorpay(options)
-        rzp1.on('payment.failed', function (response) {
-          setError(response.error.description)
-        })
-        rzp1.open()
       } else {
-        // Handle regular card payment (Stripe or just success if simulation)
         navigate('/orders')
       }
     } catch (error) {
