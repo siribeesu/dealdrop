@@ -11,6 +11,9 @@ require('dotenv').config({ path: path.join(__dirname, '.env') });
 
 const app = express();
 
+// Trust proxy for production (Render/Heroku/Load Balancers)
+app.set('trust proxy', 1);
+
 // Security middleware
 app.use(helmet({
   crossOriginResourcePolicy: { policy: 'cross-origin' },
