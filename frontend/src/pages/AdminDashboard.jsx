@@ -149,7 +149,13 @@ const AdminDashboard = () => {
         : await productsAPI.createProduct(productData)
 
       if (resp.success) {
-        await fetchDashboardData()
+        // Update local state without full re-fetch
+        if (editingProduct) {
+          setProducts(prev => prev.map(p => p._id === editingProduct._id ? { ...p, ...resp.product } : p))
+        } else {
+          setProducts(prev => [resp.product, ...prev])
+          setDashboardStats(prev => ({ ...prev, totalProducts: prev.totalProducts + 1 }))
+        }
         setShowAddForm(false)
         setEditingProduct(null)
         setNewProduct({ name: '', price: '', images: [''], description: '', category: '', stock: '' })
@@ -166,7 +172,9 @@ const AdminDashboard = () => {
     if (window.confirm('Are you sure you want to delete this product?')) {
       try {
         await productsAPI.deleteProduct(id)
-        fetchDashboardData()
+        // Remove from local state without re-fetching
+        setProducts(prev => prev.filter(p => p._id !== id))
+        setDashboardStats(prev => ({ ...prev, totalProducts: prev.totalProducts - 1 }))
       } catch (err) { alert('Delete failed') }
     }
   }
@@ -185,7 +193,7 @@ const AdminDashboard = () => {
         <div className="flex flex-col h-full">
           <div className="p-6 mb-4">
             <Logo dark={true} />
-            <p className="text-[10px] font-bold text-white/40 uppercase tracking-[0.2em] mt-2 block">Admin Console v1.0</p>
+            <p className="text-[10px] font-bold text-white/40 uppercase tracking-[0.2em] mt-2 block">Admin</p>
           </div>
 
           <nav className="flex-1 px-3 space-y-1">
@@ -266,15 +274,16 @@ const AdminDashboard = () => {
             />
           )}
           {activeTab === 'customers' && <CustomersManager users={users} onDetails={setSelectedUser} />}
-          {['analytics', 'messages', 'settings'].includes(activeTab) && (
+          {['analytics', 'messages'].includes(activeTab) && (
             <div className="flex flex-col items-center justify-center py-20 bg-white rounded-2xl border border-[#E5E7EB] shadow-sm">
               <div className="h-16 w-16 bg-slate-50 text-slate-400 rounded-full flex items-center justify-center mb-4">
                 <Settings size={32} />
               </div>
               <h3 className="text-lg font-bold text-slate-900 capitalize">Module coming soon</h3>
-              <p className="text-slate-500 text-sm">We're working on the {activeTab} analytics.</p>
+              <p className="text-slate-500 text-sm">We're working on the {activeTab} module.</p>
             </div>
           )}
+          {activeTab === 'settings' && <SettingsPanel user={authUser} />}
         </div>
       </main>
 
@@ -662,85 +671,143 @@ const StatCard = ({ title, value, icon, trend }) => (
   </div>
 )
 
-const ProductsManager = ({ products, onEdit, onDelete, onAdd }) => (
-  <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-500">
-    <div className="flex flex-wrap items-center justify-between gap-6 bg-white p-6 rounded-2xl border border-[#E5E7EB] shadow-sm">
-      <div className="flex items-center gap-4 flex-1 max-w-xl">
-        <div className="relative flex-1">
-          <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-[#9CA3AF]" />
-          <input type="text" placeholder="Filter inventory..." className="w-full h-11 pl-11 pr-4 bg-[#F8FAFC] border border-[#E5E7EB] rounded-xl text-sm outline-none focus:border-[#1E3A8A] transition-all" />
-        </div>
-        <button className="h-11 px-4 bg-slate-50 border border-[#E5E7EB] rounded-xl flex items-center gap-2 text-xs font-bold text-slate-600 hover:bg-slate-100 transition-all">
-          <Filter size={16} /> Filters
-        </button>
-      </div>
-      <button onClick={onAdd} className="h-11 px-6 bg-[#F97316] text-white rounded-xl font-bold text-sm shadow-xl shadow-[#F97316]/20 transition-all hover:bg-[#EA580C] active:scale-95 flex items-center gap-2">
-        <Plus size={18} /> Add Product
-      </button>
-    </div>
+const ProductsManager = ({ products, onEdit, onDelete, onAdd }) => {
+  const [search, setSearch] = useState('')
+  const [categoryFilter, setCategoryFilter] = useState('All')
 
-    <div className="bg-white rounded-2xl border border-[#E5E7EB] overflow-hidden shadow-sm">
-      <div className="overflow-x-auto">
-        <table className="w-full text-left">
-          <thead className="bg-[#F8FAFC] text-[10px] font-bold uppercase tracking-widest text-[#9CA3AF] border-b border-[#E5E7EB]">
-            <tr>
-              <th className="px-8 py-5">Product Information</th>
-              <th className="px-8 py-5">Classification</th>
-              <th className="px-8 py-5">Price</th>
-              <th className="px-8 py-5">Stock_Lv</th>
-              <th className="px-8 py-5">Status</th>
-              <th className="px-8 py-5 text-right">Actions</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-[#E5E7EB]">
-            {products.map((p, i) => (
-              <tr key={i} className={`hover:bg-slate-50 transition-colors ${i % 2 === 1 ? 'bg-[#F8FAFC]/50' : ''}`}>
-                <td className="px-8 py-5">
-                  <div className="flex items-center gap-4">
-                    <img src={p.images?.[0]?.url || p.images?.[0] || p.image} className="h-12 w-12 rounded-xl object-cover border border-slate-100" />
-                    <div>
-                      <p className="text-sm font-bold text-slate-900 leading-tight mb-1">{p.name}</p>
-                      <p className="text-[10px] font-mono text-slate-400">ID::{p._id.slice(-8).toUpperCase()}</p>
-                    </div>
-                  </div>
-                </td>
-                <td className="px-8 py-5">
-                  <span className="px-3 py-1 bg-slate-100 text-slate-600 rounded-lg text-[10px] font-bold uppercase tracking-widest">{p.category}</span>
-                </td>
-                <td className="px-8 py-5 text-sm font-bold">₹{p.price.toLocaleString()}</td>
-                <td className="px-8 py-5">
-                  <div className="flex items-center gap-2">
-                    <div className="h-1.5 w-12 bg-slate-100 rounded-full overflow-hidden">
-                      <div className={`h-full ${(p.inventory?.quantity || 0) < 10 ? 'bg-[#DC2626]' : 'bg-[#16A34A]'}`} style={{ width: `${Math.min((p.inventory?.quantity || 0) * 10, 100)}%` }}></div>
-                    </div>
-                    <span className={`text-[11px] font-bold ${(p.inventory?.quantity || 0) < 10 ? 'text-[#DC2626]' : 'text-slate-500'}`}>{p.inventory?.quantity || 0}</span>
-                  </div>
-                </td>
-                <td className="px-8 py-5">
-                  <div className="flex items-center gap-1.5">
-                    <div className={`h-1.5 w-1.5 rounded-full ${(p.inventory?.quantity || 0) > 0 ? 'bg-[#16A34A]' : 'bg-[#DC2626]'}`}></div>
-                    <span className={`text-[10px] font-bold uppercase ${(p.inventory?.quantity || 0) > 0 ? 'text-[#16A34A]' : 'text-[#DC2626]'}`}>{(p.inventory?.quantity || 0) > 0 ? 'Active' : 'Out of Stock'}</span>
-                  </div>
-                </td>
-                <td className="px-8 py-5 text-right space-x-2">
-                  <button onClick={() => onEdit(p)} className="p-2.5 text-[#1E3A8A] hover:bg-[#1E3A8A]/5 border border-[#1E3A8A]/20 rounded-xl transition-all"><Edit size={16} /></button>
-                  <button onClick={() => onDelete(p._id)} className="p-2.5 text-[#DC2626] hover:bg-[#DC2626]/5 rounded-xl transition-all"><Trash2 size={16} /></button>
-                </td>
-              </tr>
+  const categories = ['All', ...new Set(products.map(p => p.category).filter(Boolean))].sort()
+
+  const filtered = products.filter(p => {
+    const q = search.toLowerCase()
+    const matchesSearch = !q ||
+      p.name?.toLowerCase().includes(q) ||
+      p.category?.toLowerCase().includes(q) ||
+      p.brand?.toLowerCase().includes(q) ||
+      p.description?.toLowerCase().includes(q)
+    const matchesCategory = categoryFilter === 'All' || p.category === categoryFilter
+    return matchesSearch && matchesCategory
+  })
+
+  return (
+    <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-500">
+      <div className="flex flex-wrap items-center justify-between gap-4 bg-white p-5 rounded-2xl border border-[#E5E7EB] shadow-sm">
+        <div className="flex items-center gap-3 flex-1 max-w-2xl">
+          {/* Search input */}
+          <div className="relative flex-1">
+            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-[#9CA3AF]" />
+            <input
+              type="text"
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              placeholder="Search by name, category, brand..."
+              className="w-full h-10 pl-10 pr-10 bg-[#F8FAFC] border border-[#E5E7EB] rounded-xl text-sm outline-none focus:border-[#1E3A8A] focus:ring-2 focus:ring-[#1E3A8A]/10 transition-all"
+            />
+            {search && (
+              <button onClick={() => setSearch('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-[#9CA3AF] hover:text-slate-600">
+                <X size={14} />
+              </button>
+            )}
+          </div>
+          {/* Category filter */}
+          <select
+            value={categoryFilter}
+            onChange={e => setCategoryFilter(e.target.value)}
+            className="h-10 px-3 bg-[#F8FAFC] border border-[#E5E7EB] rounded-xl text-sm font-medium text-slate-700 outline-none focus:border-[#1E3A8A] focus:ring-2 focus:ring-[#1E3A8A]/10 transition-all cursor-pointer"
+          >
+            {categories.map(c => (
+              <option key={c} value={c}>{c}</option>
             ))}
-          </tbody>
-        </table>
+          </select>
+        </div>
+        <div className="flex items-center gap-3">
+          {(search || categoryFilter !== 'All') && (
+            <span className="text-xs font-semibold text-[#6B7280] bg-slate-100 px-3 py-1.5 rounded-lg">
+              {filtered.length} result{filtered.length !== 1 ? 's' : ''}
+            </span>
+          )}
+          <button onClick={onAdd} className="h-10 px-5 bg-[#F97316] text-white rounded-xl font-bold text-sm shadow-lg shadow-[#F97316]/20 transition-all hover:bg-[#EA580C] active:scale-95 flex items-center gap-2">
+            <Plus size={16} /> Add Product
+          </button>
+        </div>
       </div>
-      <div className="px-8 py-4 border-t border-[#E5E7EB] bg-[#F8FAFC]/30 flex items-center justify-between">
-        <p className="text-xs text-[#9CA3AF] font-medium font-sans">Showing 1-10 of {products.length} products</p>
-        <div className="flex gap-2">
-          <button className="h-8 w-8 rounded-lg border border-[#E5E7EB] flex items-center justify-center text-[#6B7280] hover:bg-white transition-all"><ChevronRight size={16} className="rotate-180" /></button>
-          <button className="h-8 w-8 rounded-lg border border-[#E5E7EB] flex items-center justify-center text-[#6B7280] hover:bg-white transition-all"><ChevronRight size={16} /></button>
+
+      <div className="bg-white rounded-2xl border border-[#E5E7EB] overflow-hidden shadow-sm">
+        <div className="overflow-x-auto">
+          <table className="w-full text-left">
+            <thead className="bg-[#F8FAFC] text-[10px] font-bold uppercase tracking-widest text-[#9CA3AF] border-b border-[#E5E7EB]">
+              <tr>
+                <th className="px-8 py-5">Product Information</th>
+                <th className="px-8 py-5">Classification</th>
+                <th className="px-8 py-5">Price</th>
+                <th className="px-8 py-5">Stock_Lv</th>
+                <th className="px-8 py-5">Status</th>
+                <th className="px-8 py-5 text-right">Actions</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-[#E5E7EB]">
+              {filtered.length === 0 ? (
+                <tr>
+                  <td colSpan={6} className="px-8 py-16 text-center">
+                    <div className="flex flex-col items-center gap-2">
+                      <Search size={32} className="text-slate-300" />
+                      <p className="text-sm font-bold text-slate-500">No products match "{search}"</p>
+                      <button onClick={() => { setSearch(''); setCategoryFilter('All') }} className="text-xs text-[#1E3A8A] hover:underline mt-1">Clear filters</button>
+                    </div>
+                  </td>
+                </tr>
+              ) : (
+                filtered.map((p, i) => (
+                  <tr key={p._id || i} className={`hover:bg-slate-50 transition-colors ${i % 2 === 1 ? 'bg-[#F8FAFC]/50' : ''}`}>
+                    <td className="px-8 py-4">
+                      <div className="flex items-center gap-4">
+                        <img src={p.images?.[0]?.url || p.images?.[0] || p.image} className="h-12 w-12 rounded-xl object-cover border border-slate-100" alt={p.name} />
+                        <div>
+                          <p className="text-sm font-bold text-slate-900 leading-tight mb-1">{p.name}</p>
+                          <p className="text-[10px] font-mono text-slate-400">ID::{p._id?.slice(-8).toUpperCase()}</p>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="px-8 py-4">
+                      <span className="px-3 py-1 bg-slate-100 text-slate-600 rounded-lg text-[10px] font-bold uppercase tracking-widest">{p.category}</span>
+                    </td>
+                    <td className="px-8 py-4 text-sm font-bold">₹{p.price?.toLocaleString()}</td>
+                    <td className="px-8 py-4">
+                      <div className="flex items-center gap-2">
+                        <div className="h-1.5 w-12 bg-slate-100 rounded-full overflow-hidden">
+                          <div className={`h-full ${(p.inventory?.quantity || 0) < 10 ? 'bg-[#DC2626]' : 'bg-[#16A34A]'}`} style={{ width: `${Math.min((p.inventory?.quantity || 0) * 10, 100)}%` }}></div>
+                        </div>
+                        <span className={`text-[11px] font-bold ${(p.inventory?.quantity || 0) < 10 ? 'text-[#DC2626]' : 'text-slate-500'}`}>{p.inventory?.quantity || 0}</span>
+                      </div>
+                    </td>
+                    <td className="px-8 py-4">
+                      <div className="flex items-center gap-1.5">
+                        <div className={`h-1.5 w-1.5 rounded-full ${(p.inventory?.quantity || 0) > 0 ? 'bg-[#16A34A]' : 'bg-[#DC2626]'}`}></div>
+                        <span className={`text-[10px] font-bold uppercase ${(p.inventory?.quantity || 0) > 0 ? 'text-[#16A34A]' : 'text-[#DC2626]'}`}>{(p.inventory?.quantity || 0) > 0 ? 'Active' : 'Out of Stock'}</span>
+                      </div>
+                    </td>
+                    <td className="px-8 py-4 text-right space-x-2">
+                      <button onClick={() => onEdit(p)} className="p-2.5 text-[#1E3A8A] hover:bg-[#1E3A8A]/5 border border-[#1E3A8A]/20 rounded-xl transition-all"><Edit size={16} /></button>
+                      <button onClick={() => onDelete(p._id)} className="p-2.5 text-[#DC2626] hover:bg-[#DC2626]/5 rounded-xl transition-all"><Trash2 size={16} /></button>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+        <div className="px-8 py-4 border-t border-[#E5E7EB] bg-[#F8FAFC]/30 flex items-center justify-between">
+          <p className="text-xs text-[#9CA3AF] font-medium">
+            Showing <span className="text-slate-700 font-bold">{filtered.length}</span> of {products.length} products
+          </p>
+          <div className="flex gap-2">
+            <button className="h-8 w-8 rounded-lg border border-[#E5E7EB] flex items-center justify-center text-[#6B7280] hover:bg-white transition-all"><ChevronRight size={16} className="rotate-180" /></button>
+            <button className="h-8 w-8 rounded-lg border border-[#E5E7EB] flex items-center justify-center text-[#6B7280] hover:bg-white transition-all"><ChevronRight size={16} /></button>
+          </div>
         </div>
       </div>
     </div>
-  </div>
-)
+  )
+}
 
 const OrdersManager = ({ orders, onDetails }) => (
   <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-500">
@@ -916,6 +983,146 @@ const StatusBadge = ({ status }) => {
     <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest border ${current}`}>
       {status}
     </span>
+  )
+}
+
+const SettingsPanel = ({ user }) => {
+  const [notifications, setNotifications] = useState({
+    newOrders: true,
+    lowStock: true,
+    newUsers: false,
+    weeklySummary: true,
+  })
+
+  return (
+    <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+      {/* Store Info */}
+      <div className="bg-white rounded-2xl border border-[#E5E7EB] shadow-sm overflow-hidden">
+        <div className="px-6 py-5 border-b border-[#E5E7EB]">
+          <h3 className="text-sm font-bold text-slate-800 uppercase tracking-widest">Store Information</h3>
+        </div>
+        <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div>
+            <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-2">Store Name</label>
+            <input defaultValue="DealDrop Fashion" className="w-full h-11 px-4 bg-[#F8FAFC] border border-[#E5E7EB] rounded-xl text-sm font-medium outline-none focus:ring-2 focus:ring-[#1E3A8A]/10" />
+          </div>
+          <div>
+            <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-2">Support Email</label>
+            <input defaultValue="support@dealdrop.io" className="w-full h-11 px-4 bg-[#F8FAFC] border border-[#E5E7EB] rounded-xl text-sm font-medium outline-none focus:ring-2 focus:ring-[#1E3A8A]/10" />
+          </div>
+          <div>
+            <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-2">Support Phone</label>
+            <input defaultValue="+91 98765 43210" className="w-full h-11 px-4 bg-[#F8FAFC] border border-[#E5E7EB] rounded-xl text-sm font-medium outline-none focus:ring-2 focus:ring-[#1E3A8A]/10" />
+          </div>
+          <div>
+            <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-2">Store Location</label>
+            <input defaultValue="Mumbai, India" className="w-full h-11 px-4 bg-[#F8FAFC] border border-[#E5E7EB] rounded-xl text-sm font-medium outline-none focus:ring-2 focus:ring-[#1E3A8A]/10" />
+          </div>
+          <div className="md:col-span-2">
+            <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-2">Store Description</label>
+            <textarea defaultValue="Your go-to fashion destination for premium clothing, footwear, and accessories at unbeatable prices." rows={3} className="w-full p-4 bg-[#F8FAFC] border border-[#E5E7EB] rounded-xl text-sm font-medium outline-none focus:ring-2 focus:ring-[#1E3A8A]/10 resize-none" />
+          </div>
+          <div className="md:col-span-2 flex justify-end">
+            <button className="h-10 px-6 bg-[#1E3A8A] text-white rounded-xl font-bold text-sm hover:bg-[#1e40af] transition-all">Save Changes</button>
+          </div>
+        </div>
+      </div>
+
+      {/* Admin Account */}
+      <div className="bg-white rounded-2xl border border-[#E5E7EB] shadow-sm overflow-hidden">
+        <div className="px-6 py-5 border-b border-[#E5E7EB]">
+          <h3 className="text-sm font-bold text-slate-800 uppercase tracking-widest">Admin Account</h3>
+        </div>
+        <div className="p-6">
+          <div className="flex items-center gap-5 mb-6 pb-6 border-b border-[#E5E7EB]">
+            <div className="h-16 w-16 rounded-2xl bg-[#1E3A8A]/5 border border-[#1E3A8A]/10 flex items-center justify-center text-[#1E3A8A] text-2xl font-black">
+              {user?.firstName?.[0]}
+            </div>
+            <div>
+              <p className="font-bold text-slate-900 text-lg">{user?.firstName} {user?.lastName}</p>
+              <p className="text-sm text-slate-500">{user?.email}</p>
+              <span className="inline-block mt-1 px-2 py-0.5 bg-blue-50 text-[#1E3A8A] text-[10px] font-bold uppercase tracking-widest rounded-full border border-blue-100">Super Admin</span>
+            </div>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-2">First Name</label>
+              <input defaultValue={user?.firstName} className="w-full h-11 px-4 bg-[#F8FAFC] border border-[#E5E7EB] rounded-xl text-sm font-medium outline-none focus:ring-2 focus:ring-[#1E3A8A]/10" />
+            </div>
+            <div>
+              <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-2">Last Name</label>
+              <input defaultValue={user?.lastName} className="w-full h-11 px-4 bg-[#F8FAFC] border border-[#E5E7EB] rounded-xl text-sm font-medium outline-none focus:ring-2 focus:ring-[#1E3A8A]/10" />
+            </div>
+            <div className="md:col-span-2">
+              <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-2">Email Address</label>
+              <input defaultValue={user?.email} className="w-full h-11 px-4 bg-[#F8FAFC] border border-[#E5E7EB] rounded-xl text-sm font-medium outline-none focus:ring-2 focus:ring-[#1E3A8A]/10" />
+            </div>
+            <div className="md:col-span-2 flex justify-end">
+              <button className="h-10 px-6 bg-[#1E3A8A] text-white rounded-xl font-bold text-sm hover:bg-[#1e40af] transition-all">Update Profile</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Notifications */}
+      <div className="bg-white rounded-2xl border border-[#E5E7EB] shadow-sm overflow-hidden">
+        <div className="px-6 py-5 border-b border-[#E5E7EB]">
+          <h3 className="text-sm font-bold text-slate-800 uppercase tracking-widest">Notification Preferences</h3>
+        </div>
+        <div className="p-6 space-y-4">
+          {[
+            { key: 'newOrders', label: 'New Orders', desc: 'Get notified when a customer places a new order' },
+            { key: 'lowStock', label: 'Low Stock Alerts', desc: 'Alert when a product stock falls below 10 units' },
+            { key: 'newUsers', label: 'New Registrations', desc: 'Notify when new customers register on the platform' },
+            { key: 'weeklySummary', label: 'Weekly Summary', desc: 'Receive a weekly summary of sales and activity' },
+          ].map(({ key, label, desc }) => (
+            <div key={key} className="flex items-center justify-between py-3 border-b border-[#E5E7EB] last:border-0">
+              <div>
+                <p className="text-sm font-bold text-slate-800">{label}</p>
+                <p className="text-xs text-slate-500 mt-0.5">{desc}</p>
+              </div>
+              <button
+                onClick={() => setNotifications(prev => ({ ...prev, [key]: !prev[key] }))}
+                className={`relative w-12 h-6 rounded-full transition-colors duration-200 ${notifications[key] ? 'bg-[#1E3A8A]' : 'bg-slate-200'}`}
+              >
+                <span className={`absolute top-1 w-4 h-4 bg-white rounded-full shadow transition-transform duration-200 ${notifications[key] ? 'translate-x-7' : 'translate-x-1'}`} />
+              </button>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Security */}
+      <div className="bg-white rounded-2xl border border-[#E5E7EB] shadow-sm overflow-hidden">
+        <div className="px-6 py-5 border-b border-[#E5E7EB]">
+          <h3 className="text-sm font-bold text-slate-800 uppercase tracking-widest">Security</h3>
+        </div>
+        <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div>
+            <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-2">Current Password</label>
+            <input type="password" placeholder="••••••••" className="w-full h-11 px-4 bg-[#F8FAFC] border border-[#E5E7EB] rounded-xl text-sm font-medium outline-none focus:ring-2 focus:ring-[#1E3A8A]/10" />
+          </div>
+          <div>
+            <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-2">New Password</label>
+            <input type="password" placeholder="••••••••" className="w-full h-11 px-4 bg-[#F8FAFC] border border-[#E5E7EB] rounded-xl text-sm font-medium outline-none focus:ring-2 focus:ring-[#1E3A8A]/10" />
+          </div>
+          <div className="md:col-span-2 flex justify-end">
+            <button className="h-10 px-6 bg-[#F97316] text-white rounded-xl font-bold text-sm hover:bg-[#EA580C] transition-all">Change Password</button>
+          </div>
+        </div>
+      </div>
+
+      {/* About */}
+      <div className="bg-white rounded-2xl border border-[#E5E7EB] shadow-sm p-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="text-sm font-bold text-slate-800">DealDrop Fashion Admin</p>
+            <p className="text-xs text-slate-400 mt-0.5">Version 1.0.0 · Built with ❤️ in India</p>
+          </div>
+          <span className="px-3 py-1 bg-green-50 text-green-600 text-xs font-bold rounded-full border border-green-100">● Live</span>
+        </div>
+      </div>
+    </div>
   )
 }
 

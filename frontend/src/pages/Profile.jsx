@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { Eye, EyeOff, User, Mail, Phone, MapPin, Loader2, ChevronRight, ShieldCheck, Lock, Edit3 } from 'lucide-react'
+import { Eye, EyeOff, User, Mail, Phone, MapPin, Loader2, ChevronRight, ShieldCheck, Lock, Edit3, ArrowLeft } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext.jsx'
 
@@ -114,11 +114,16 @@ const Profile = () => {
   }
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC] pt-24 pb-20">
+    <div className="min-h-screen bg-[#F8FAFC] md:pt-24 pt-4 pb-20">
       <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
-
-        {/* Page Header */}
-        <div className="mb-12">
+        <button 
+          onClick={() => window.history.back()}
+          className="flex items-center gap-2 text-[#6B7280] hover:text-[#1E3A8A] transition-colors font-bold text-sm mb-6"
+        >
+          <ArrowLeft className="h-4 w-4" />
+          Back
+        </button>
+        <div className="mb-8 md:mb-12">
           <h1 className="text-3xl font-bold text-[#1F2937] mb-2" style={{ fontFamily: 'Poppins, sans-serif' }}>
             My Account
           </h1>

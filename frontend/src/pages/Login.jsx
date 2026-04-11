@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { EyeOff, Eye, Mail, Lock, ArrowRight, ShieldCheck, Loader2 } from 'lucide-react'
+import { EyeOff, Eye, Mail, Lock, ArrowRight, ShieldCheck, Loader2, ArrowLeft } from 'lucide-react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext.jsx'
 
@@ -13,7 +13,7 @@ const Login = () => {
   const [error, setError] = useState('')
   const [canResend, setCanResend] = useState(false)
   const [resending, setResending] = useState(false)
-  const { login, resendVerification } = useAuth()
+  const { login, resendVerification, logout } = useAuth()
   const navigate = useNavigate()
 
   const handleInputChange = (e) => {
@@ -29,7 +29,12 @@ const Login = () => {
     try {
       const response = await login(formData)
       if (response.success) {
-        navigate('/')
+        if (response.user.role === 'admin') {
+          logout()
+          setError('Admins cannot log in here. Please use the Admin portal.')
+        } else {
+          navigate('/')
+        }
       } else {
         setError(response.message || 'Login failed. Please try again.')
         if (response.message?.includes('verify')) {
@@ -86,7 +91,14 @@ const Login = () => {
       </div>
 
       {/* Right side: Login Form */}
-      <div className="flex-1 flex items-center justify-center p-6 sm:p-12 lg:p-20 bg-white">
+      <div className="flex-1 flex items-center justify-center p-6 sm:p-12 lg:p-20 bg-white relative">
+        <button 
+          onClick={() => navigate(-1)}
+          className="absolute top-6 left-6 flex items-center gap-2 text-[#6B7280] hover:text-[#1E3A8A] transition-colors font-bold text-sm"
+        >
+          <ArrowLeft className="h-4 w-4" />
+          Back
+        </button>
         <div className="w-full max-w-md">
           <div className="mb-10 text-center md:text-left">
             <h2 className="text-3xl font-bold text-[#1F2937] mb-2" style={{ fontFamily: 'Poppins, sans-serif' }}>

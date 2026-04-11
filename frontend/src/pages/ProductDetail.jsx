@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { useParams, Link } from 'react-router-dom'
-import { Star, ShoppingCart, Heart, Share2, Truck, ShieldCheck, RotateCcw, Loader2, ArrowRight, Check, Minus, Plus } from 'lucide-react'
+import { Star, ShoppingCart, Heart, Share2, Truck, ShieldCheck, RotateCcw, Loader2, ArrowRight, Check, Minus, Plus, ArrowLeft } from 'lucide-react'
 import { productsAPI, cartAPI } from '../lib/api.js'
 import { useAuth } from '../contexts/AuthContext.jsx'
 
@@ -105,8 +105,17 @@ const ProductDetail = () => {
     : [product.image || '/placeholder-product.jpg']
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC] pt-24 pb-20">
+    <div className="min-h-screen bg-[#F8FAFC] md:pt-24 pt-4 pb-20">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        {/* Back Button */}
+        <button 
+          onClick={() => window.history.back()}
+          className="flex items-center gap-2 text-[#6B7280] hover:text-[#1E3A8A] transition-colors font-bold text-sm mb-6"
+        >
+          <ArrowLeft className="h-4 w-4" />
+          Back
+        </button>
+
         {/* Breadcrumbs */}
         <nav className="flex mb-8 text-sm font-medium text-[#6B7280]">
           <Link to="/" className="hover:text-[#1E3A8A]">Home</Link>
@@ -243,15 +252,6 @@ const ProductDetail = () => {
                 <div>
                   <p className="text-xs font-bold text-[#1F2937]">Free Delivery</p>
                   <p className="text-[11px] text-[#6B7280]">On orders above ₹499</p>
-                </div>
-              </div>
-              <div className="flex items-center gap-3">
-                <div className="h-10 w-10 bg-emerald-50 rounded-xl flex items-center justify-center text-[#16A34A]">
-                  <ShieldCheck className="h-5 w-5" />
-                </div>
-                <div>
-                  <p className="text-xs font-bold text-[#1F2937]">2 Year Warranty</p>
-                  <p className="text-[11px] text-[#6B7280]">Authenticity guaranteed</p>
                 </div>
               </div>
             </div>

@@ -87,12 +87,7 @@ const ProductCard = ({ product }) => {
           className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
         />
 
-        {/* Badges */}
-        {product.stock <= 5 && product.stock > 0 && (
-          <span className="absolute top-3 left-3 bg-red-500 text-white text-[11px] font-semibold px-2.5 py-1 rounded-lg">
-            Low Stock
-          </span>
-        )}
+        {/* Badges - Removed */}
 
         {/* Wishlist */}
         <button
@@ -149,7 +144,7 @@ const ProductCard = ({ product }) => {
             disabled={addingToCart || product.stock <= 0}
             className="h-9 w-9 rounded-xl bg-[#F97316] hover:bg-[#EA580C] text-white flex items-center justify-center transition-all duration-200 shadow-sm hover:shadow-md active:scale-95 disabled:opacity-50"
           >
-            {addingToCart ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
+            {addingToCart ? <Loader2 className="h-4 w-4 animate-spin" /> : <ShoppingCart className="h-4 w-4" />}
           </button>
         </div>
       </div>

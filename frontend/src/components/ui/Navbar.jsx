@@ -1,14 +1,15 @@
 import React, { useState, useEffect } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
-import { ShoppingCart, User, LogOut, Menu, X, ChevronDown, Shield, LayoutDashboard, UserCircle, Heart, Search } from 'lucide-react'
+import { ShoppingCart, User, LogOut, Menu, X, ChevronDown, Shield, LayoutDashboard, UserCircle, Heart, Search, Package } from 'lucide-react'
 import { useAuth } from '../../contexts/AuthContext.jsx'
 import Logo from './Logo.jsx'
 
 const Navbar = () => {
-  const { isAuthenticated, user, logout, wishlist } = useAuth()
   const [isScrolled, setIsScrolled] = useState(false)
+  const [isProfileOpen, setIsProfileOpen] = useState(false)
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
+  const { isAuthenticated, user, logout, wishlist } = useAuth()
   const location = useLocation()
   const navigate = useNavigate()
 
@@ -20,8 +21,17 @@ const Navbar = () => {
     return () => window.removeEventListener('scroll', handleScroll)
   }, [])
 
+  // Close dropdown on click outside
+  useEffect(() => {
+    if (!isProfileOpen) return;
+    const handleClick = () => setIsProfileOpen(false);
+    window.addEventListener('click', handleClick);
+    return () => window.removeEventListener('click', handleClick);
+  }, [isProfileOpen]);
+
   const handleLogout = () => {
     logout()
+    navigate('/login')
   }
 
   const handleSearch = (e) => {
@@ -33,174 +43,135 @@ const Navbar = () => {
   }
 
   return (
-    <nav className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${isScrolled
-      ? 'bg-white shadow-[0_1px_3px_rgba(0,0,0,0.08)] border-b border-[#E5E7EB]'
-      : 'bg-[#1E3A8A]'
-      }`}>
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between items-center h-16">
+    <nav className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 bg-[#1E3A8A] shadow-md`}>
+      <div className="max-w-full mx-auto px-4 sm:px-6 lg:px-12">
+        <div className="flex justify-between items-center h-20">
+          {/* Left: Mobile Menu Button */}
+          <div className="flex lg:hidden items-center">
+            <button
+              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+              className="p-2 text-white hover:bg-white/10 rounded-xl transition-all active:scale-95"
+            >
+              {isMobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+            </button>
+          </div>
+
           {/* Logo */}
           <Link to="/" className="shrink-0">
-            <Logo isScrolled={isScrolled} />
+            <Logo isScrolled={false} />
           </Link>
 
-          {/* Center: Categories */}
-          <div className="hidden lg:flex items-center space-x-6">
-            <NavLink to="/" label="Home" active={location.pathname === '/'} isScrolled={isScrolled} />
-            <NavLink to="/products" label="Shop" active={location.pathname === '/products'} isScrolled={isScrolled} />
-            <NavLink to="/products?category=electronics" label="Electronics" isScrolled={isScrolled} />
-            <NavLink to="/products?category=fashion" label="Fashion" isScrolled={isScrolled} />
+          {/* Center: Fashion Categories (Desktop) */}
+          <div className="hidden lg:flex items-center space-x-8">
+            <NavLink to="/" label="Home" active={location.pathname === '/'} />
+            <NavLink to="/products" label="Shop All" active={location.pathname === '/products' && !location.search} />
+            <NavLink to="/products?category=Men" label="Men" />
+            <NavLink to="/products?category=Women" label="Women" />
+            <Link to="/products?featured=true" className="text-sm font-bold px-5 py-2 rounded-xl bg-[#F97316] text-white hover:bg-[#EA580C] shadow-lg shadow-orange-500/20 transition-all active:scale-95">
+              Limited Deals
+            </Link>
           </div>
 
           {/* Right: Search + Icons */}
-          <div className="hidden md:flex items-center space-x-3">
-            {/* Inline search */}
-            <form onSubmit={handleSearch} className="relative">
+          <div className="flex items-center space-x-2">
+            <form onSubmit={handleSearch} className="hidden sm:block relative">
               <input
                 type="text"
-                placeholder="Search products..."
+                placeholder="Search fashion..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className={`w-48 lg:w-56 h-9 pl-9 pr-3 text-sm rounded-xl border transition-all duration-200 focus:w-64 focus:outline-none focus:ring-2 focus:ring-[#F97316]/40 ${isScrolled
-                  ? 'bg-[#F8FAFC] border-[#E5E7EB] text-[#1F2937] placeholder-[#9CA3AF]'
-                  : 'bg-white/10 border-white/20 text-white placeholder-white/60 focus:bg-white/20'
-                  }`}
+                className="w-48 lg:w-64 h-10 pl-10 pr-4 text-sm rounded-xl border border-white/20 bg-white/10 text-white placeholder-white/60 focus:bg-white/20 focus:outline-none focus:ring-2 focus:ring-white/30 transition-all"
               />
-              <Search className={`absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 ${isScrolled ? 'text-[#9CA3AF]' : 'text-white/60'
-                }`} />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-white/60" />
             </form>
 
-            {/* Wishlist */}
-            <Link to="/wishlist" className={`relative p-2 rounded-xl transition-colors ${isScrolled ? 'text-[#1F2937] hover:bg-gray-100' : 'text-white hover:bg-white/10'
-              }`}>
-              <Heart className="h-5 w-5" />
-              {wishlist.length > 0 && (
-                <span className="absolute -top-0.5 -right-0.5 h-4 w-4 bg-[#F97316] text-white text-[10px] font-bold flex items-center justify-center rounded-full">
-                  {wishlist.length}
-                </span>
-              )}
-            </Link>
+            <div className="hidden md:flex items-center space-x-1 md:space-x-2">
+              <NavIcon to="/wishlist" icon={<Heart className="h-5 w-5" />} count={wishlist.length} />
+              <NavIcon to="/orders" icon={<Package className="h-5 w-5" />} />
+              <NavIcon to="/cart" icon={<ShoppingCart className="h-5 w-5" />} />
+            </div>
 
-            <Link to="/cart" className={`relative p-2 rounded-xl transition-colors ${isScrolled ? 'text-[#1F2937] hover:bg-gray-100' : 'text-white hover:bg-white/10'
-              }`}>
-              <ShoppingCart className="h-5 w-5" />
-              {(user?.cart?.length > 0) && (
-                <span className={`absolute -top-0.5 -right-0.5 h-4 w-4 text-white text-[10px] font-bold flex items-center justify-center rounded-full ${isScrolled ? 'bg-[#1E3A8A]' : 'bg-[#F97316]'
-                  }`}>
-                  {user.cart.reduce((sum, item) => sum + (item.quantity || 1), 0)}
-                </span>
-              )}
-            </Link>
-
-            {/* Auth */}
             {isAuthenticated ? (
-              <div className="relative group">
-                <button className={`flex items-center space-x-2 px-3 py-1.5 rounded-xl transition-all duration-200 ${isScrolled ? 'hover:bg-gray-100 text-[#1F2937]' : 'hover:bg-white/10 text-white'
-                  }`}>
-                  <div className="h-8 w-8 rounded-full bg-[#1E3A8A] flex items-center justify-center text-white text-sm font-bold">
-                    {user?.firstName?.charAt(0) || 'U'}
+              <div className="relative">
+                <button 
+                  onClick={(e) => { e.stopPropagation(); setIsProfileOpen(!isProfileOpen) }}
+                  className="flex items-center space-x-1.5 px-2 md:px-3 py-1.5 md:py-2 rounded-lg transition-all duration-200 hover:bg-white/10 text-white"
+                >
+                  <div className="h-8 w-8 md:h-9 md:w-9 rounded-full flex items-center justify-center text-xs md:text-sm font-bold border bg-white/20 text-white border-white/30 shadow-sm">
+                    {user?.firstName?.charAt(0) || <User className="h-4 w-4" />}
                   </div>
-                  <span className="text-sm font-medium hidden lg:inline">{user?.firstName || 'Account'}</span>
-                  <ChevronDown className="h-3.5 w-3.5 transition-transform duration-200 group-hover:rotate-180" />
+                  <ChevronDown className={`hidden md:block h-4 w-4 transition-transform duration-200 ${isProfileOpen ? 'rotate-180' : ''}`} />
                 </button>
 
-                <div className="absolute right-0 mt-2 w-56 bg-white rounded-xl shadow-lg border border-[#E5E7EB] py-1 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 translate-y-1 group-hover:translate-y-0 z-[100]">
-                  <div className="px-4 py-3 border-b border-[#E5E7EB]">
-                    <p className="text-xs text-[#9CA3AF] font-medium">Signed in as</p>
-                    <p className="text-sm font-semibold text-[#1F2937] truncate">{user?.email}</p>
+                {isProfileOpen && (
+                  <div className="absolute right-0 mt-2 w-64 animate-in fade-in slide-in-from-top-2 duration-200 z-[110]">
+                    <div className="bg-white rounded-2xl shadow-2xl border border-[#E5E7EB] overflow-hidden" onClick={(e) => e.stopPropagation()}>
+                      <div className="p-4 bg-[#F8FAFC] border-b border-[#E5E7EB]">
+                        <p className="text-sm font-bold text-[#1F2937] truncate">{user?.firstName} {user?.lastName}</p>
+                        <p className="text-[11px] font-medium text-[#6B7280] truncate">{user?.email}</p>
+                      </div>
+                      <div className="py-2">
+                        <DropdownLink to="/profile" icon={<UserCircle className="h-4 w-4" />} label="My Profile" />
+                        <DropdownLink to="/orders" icon={<Package className="h-4 w-4" />} label="My Orders" />
+                        <DropdownLink to="/wishlist" icon={<Heart className="h-4 w-4" />} label="Wishlist" />
+                        <DropdownLink to="/cart" icon={<ShoppingCart className="h-4 w-4" />} label="My Cart" />
+                        {user?.role === 'admin' && (
+                          <>
+                            <div className="my-1 border-t border-[#E5E7EB]"></div>
+                            <DropdownLink to="/admin" icon={<LayoutDashboard className="h-4 w-4" />} label="Admin Dashboard" highlight />
+                          </>
+                        )}
+                      </div>
+                      <div className="border-t border-[#E5E7EB] bg-gray-50/50 p-2">
+                        <button onClick={handleLogout} className="w-full flex items-center space-x-3 px-4 py-2.5 rounded-xl text-sm font-bold text-red-600 hover:bg-red-50 transition-all active:scale-[0.98]">
+                          <LogOut className="h-4 w-4" />
+                          <span>Logout</span>
+                        </button>
+                      </div>
+                    </div>
                   </div>
-                  <div className="py-1">
-                    <DropdownLink to="/profile" icon={<UserCircle className="h-4 w-4" />} label="My Profile" />
-                    <DropdownLink to="/orders" icon={<ShoppingCart className="h-4 w-4" />} label="My Orders" />
-                    <DropdownLink to="/wishlist" icon={<Heart className="h-4 w-4" />} label="Wishlist" />
-                    {user?.role === 'admin' && (
-                      <>
-                        <div className="my-1 border-t border-[#E5E7EB]"></div>
-                        <DropdownLink to="/admin" icon={<LayoutDashboard className="h-4 w-4" />} label="Admin Dashboard" highlight />
-                      </>
-                    )}
-                  </div>
-                  <div className="border-t border-[#E5E7EB] py-1">
-                    <button
-                      onClick={handleLogout}
-                      className="w-full flex items-center space-x-2.5 px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors"
-                    >
-                      <LogOut className="h-4 w-4" />
-                      <span>Sign Out</span>
-                    </button>
-                  </div>
-                </div>
+                )}
               </div>
             ) : (
               <Link to="/login">
-                <button className={`px-5 py-2 rounded-xl text-sm font-semibold transition-all duration-200 ${isScrolled
-                  ? 'bg-[#F97316] text-white hover:bg-[#EA580C] shadow-sm'
-                  : 'bg-white text-[#1E3A8A] hover:bg-gray-50'
-                  }`}>
+                <button className="hidden sm:block px-5 py-2 rounded-xl text-sm font-bold transition-all duration-300 bg-[#F97316] text-white hover:bg-[#EA580C] shadow-lg shadow-orange-500/20 active:scale-95">
                   Sign In
                 </button>
+                <div className="sm:hidden p-2 text-white hover:bg-white/10 rounded-xl transition-all active:scale-90">
+                  <User className="h-6 w-6" />
+                </div>
               </Link>
             )}
-          </div>
-
-          {/* Mobile Menu Toggle */}
-          <div className="md:hidden flex items-center space-x-2">
-            <Link to="/cart" className={`p-2 rounded-lg ${isScrolled ? 'text-[#1F2937]' : 'text-white'}`}>
-              <ShoppingCart className="h-5 w-5" />
-            </Link>
-            <button
-              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-              className={`p-2 rounded-lg transition-colors ${isScrolled ? 'text-[#1F2937] hover:bg-gray-100' : 'text-white hover:bg-white/10'
-                }`}
-            >
-              {isMobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
-            </button>
           </div>
         </div>
       </div>
 
-      {/* Mobile Menu */}
+      {/* Mobile Menu Slide-out */}
       {isMobileMenuOpen && (
-        <div className="md:hidden bg-white border-t border-[#E5E7EB] shadow-lg">
-          <div className="px-4 py-3 border-b border-[#E5E7EB]">
-            <form onSubmit={handleSearch} className="relative">
-              <input
-                type="text"
-                placeholder="Search products..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full h-10 pl-10 pr-4 text-sm bg-[#F8FAFC] border border-[#E5E7EB] rounded-xl placeholder-[#9CA3AF] text-[#1F2937] focus:outline-none focus:ring-2 focus:ring-[#F97316]/30"
-              />
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[#9CA3AF]" />
-            </form>
-          </div>
-          <div className="px-2 py-2 space-y-0.5">
-            <MobileLink to="/" label="Home" onClick={() => setIsMobileMenuOpen(false)} />
-            <MobileLink to="/products" label="Shop" onClick={() => setIsMobileMenuOpen(false)} />
-            <MobileLink to="/products?category=electronics" label="Electronics" onClick={() => setIsMobileMenuOpen(false)} />
-            <MobileLink to="/products?category=fashion" label="Fashion" onClick={() => setIsMobileMenuOpen(false)} />
-            {isAuthenticated ? (
-              <>
-                <div className="my-1 border-t border-[#E5E7EB]"></div>
-                <MobileLink to="/profile" label="Profile" onClick={() => setIsMobileMenuOpen(false)} />
-                <MobileLink to="/wishlist" label={`Wishlist (${wishlist.length})`} onClick={() => setIsMobileMenuOpen(false)} />
-                <MobileLink to="/orders" label="My Orders" onClick={() => setIsMobileMenuOpen(false)} />
-                {user?.role === 'admin' && (
-                  <MobileLink to="/admin" label="Admin Dashboard" onClick={() => setIsMobileMenuOpen(false)} highlight />
-                )}
-                <div className="my-1 border-t border-[#E5E7EB]"></div>
-                <button
-                  onClick={() => { handleLogout(); setIsMobileMenuOpen(false) }}
-                  className="w-full text-left px-4 py-2.5 text-sm text-red-600 font-medium hover:bg-red-50 rounded-lg"
-                >
-                  Sign Out
-                </button>
-              </>
-            ) : (
-              <Link to="/login" onClick={() => setIsMobileMenuOpen(false)} className="block mx-2 mt-2 px-4 py-2.5 bg-[#F97316] text-white font-semibold rounded-xl text-center text-sm">
-                Sign In
-              </Link>
-            )}
+        <div className="lg:hidden fixed inset-0 z-[60] animate-in fade-in duration-300">
+          <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setIsMobileMenuOpen(false)}></div>
+          <div className="absolute top-0 left-0 w-3/4 h-full bg-white shadow-2xl animate-in slide-in-from-left duration-300 overflow-y-auto">
+            <div className="p-6 bg-[#1E3A8A] text-white flex items-center justify-between">
+              <Logo isScrolled={false} white />
+              <button onClick={() => setIsMobileMenuOpen(false)}><X className="h-6 w-6" /></button>
+            </div>
+            <div className="p-4 space-y-2">
+              <MobileLink to="/" label="Home" onClick={() => setIsMobileMenuOpen(false)} />
+              <MobileLink to="/products" label="Shop All" onClick={() => setIsMobileMenuOpen(false)} highlight />
+              <MobileLink to="/products?category=Men" label="Men's Fashion" onClick={() => setIsMobileMenuOpen(false)} />
+              <MobileLink to="/products?category=Women" label="Women's Fashion" onClick={() => setIsMobileMenuOpen(false)} />
+              <div className="my-4 border-t border-[#E5E7EB]"></div>
+              <MobileLink to="/orders" label="Track Orders" onClick={() => setIsMobileMenuOpen(false)} />
+              <MobileLink to="/wishlist" label="Wishlist" onClick={() => setIsMobileMenuOpen(false)} />
+              <MobileLink to="/cart" label="Shopping Cart" onClick={() => setIsMobileMenuOpen(false)} />
+              <div className="mt-8 p-4 bg-orange-50 rounded-2xl border border-orange-100">
+                <p className="text-xs font-bold text-[#F97316] uppercase tracking-widest mb-2">Summer Sale</p>
+                <p className="text-sm font-bold text-[#1F2937] mb-4">Up to 60% off on all collections!</p>
+                <Link to="/products?featured=true" onClick={() => setIsMobileMenuOpen(false)} className="block w-full text-center py-2.5 bg-[#F97316] text-white rounded-xl text-sm font-bold shadow-lg shadow-orange-500/20 active:scale-95 transition-all">
+                  Shop Deals
+                </Link>
+              </div>
+            </div>
           </div>
         </div>
       )}
@@ -208,13 +179,12 @@ const Navbar = () => {
   )
 }
 
-const NavLink = ({ to, label, active, isScrolled }) => (
+const NavLink = ({ to, label, active, dark }) => (
   <Link
     to={to}
-    className={`text-[15px] font-medium transition-colors duration-200 py-1 ${isScrolled
-      ? `${active ? 'text-[#1E3A8A] font-semibold' : 'text-[#6B7280] hover:text-[#1F2937]'}`
-      : `${active ? 'text-white font-semibold' : 'text-white/80 hover:text-white'}`
-      }`}
+    className={`px-4 py-2 text-base font-bold transition-all duration-300 ${
+      active ? 'text-[#F97316]' : 'text-white hover:text-white/80'
+    }`}
   >
     {label}
   </Link>
@@ -224,7 +194,7 @@ const MobileLink = ({ to, label, onClick, highlight }) => (
   <Link
     to={to}
     onClick={onClick}
-    className={`block px-4 py-2.5 text-sm font-medium rounded-lg transition-colors ${highlight
+    className={`block px-4 py-2 text-sm font-medium rounded-lg transition-colors ${highlight
       ? 'text-[#1E3A8A] bg-blue-50 hover:bg-blue-100'
       : 'text-[#1F2937] hover:bg-[#F8FAFC]'
       }`}
@@ -243,6 +213,20 @@ const DropdownLink = ({ to, icon, label, highlight }) => (
   >
     <span className={highlight ? 'text-[#1E3A8A]' : 'text-[#9CA3AF]'}>{icon}</span>
     <span>{label}</span>
+  </Link>
+)
+
+const NavIcon = ({ to, icon, count, dark }) => (
+  <Link
+    to={to}
+    className="relative p-2 rounded-xl transition-all duration-300 active:scale-90 text-white hover:bg-white/10"
+  >
+    {icon}
+    {count > 0 && (
+      <span className="absolute top-1.5 right-1.5 h-4 w-4 bg-[#F97316] text-white text-[10px] font-bold flex items-center justify-center rounded-full border-2 border-white shadow-sm">
+        {count}
+      </span>
+    )}
   </Link>
 )
 

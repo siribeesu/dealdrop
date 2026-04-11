@@ -56,19 +56,28 @@ const Orders = () => {
   )
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC] pt-24 pb-20">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-[#F8FAFC] md:pt-14 pt-6 pb-20">
+      <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-12">
-          <div>
-            <h1 className="text-3xl font-bold text-[#1F2937] mb-2" style={{ fontFamily: 'Poppins, sans-serif' }}>
-              Order History
-            </h1>
-            <nav className="flex items-center gap-2 text-sm text-[#6B7280]">
-              <Link to="/" className="hover:text-[#1E3A8A]">Home</Link>
-              <ChevronRight className="h-3 w-3" />
-              <span className="text-[#1F2937] font-semibold">My Orders</span>
-            </nav>
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-6 md:mb-8">
+          <div className="flex flex-col gap-4">
+            <button 
+              onClick={() => window.history.back()}
+              className="w-fit flex items-center gap-2 text-[#6B7280] hover:text-[#1E3A8A] transition-colors font-bold text-sm"
+            >
+              <ArrowLeft className="h-4 w-4" />
+              Back
+            </button>
+            <div>
+              <h1 className="text-2xl md:text-3xl font-bold text-[#1F2937] mb-2" style={{ fontFamily: 'Poppins, sans-serif' }}>
+                Order History
+              </h1>
+              <nav className="flex items-center gap-2 text-sm text-[#6B7280]">
+                <Link to="/" className="hover:text-[#1E3A8A]">Home</Link>
+                <ChevronRight className="h-3 w-3" />
+                <span className="text-[#1F2937] font-semibold">My Orders</span>
+              </nav>
+            </div>
           </div>
           <p className="text-sm font-bold text-[#6B7280]">
             Total Orders: <span className="text-[#1E3A8A]">{orders.length}</span>
@@ -129,20 +138,53 @@ const Orders = () => {
                   {/* Order Content */}
                   <div className="p-6">
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
-                      {/* Products List */}
-                      <div className="space-y-6">
-                        {order.items.map((item, idx) => (
-                          <div key={idx} className="flex gap-4">
-                            <div className="h-20 w-20 rounded-xl bg-[#F8FAFC] border border-[#F1F5F9] overflow-hidden shrink-0">
-                              <img src={item.image || '/placeholder-product.jpg'} className="h-full w-full object-contain p-2" alt="" />
+                      {/* Products List & Tracking Timeline */}
+                      <div className="space-y-8">
+                        <div className="space-y-6">
+                          {order.items.map((item, idx) => (
+                            <div key={idx} className="flex gap-4">
+                              <div className="h-20 w-20 rounded-xl bg-[#F8FAFC] border border-[#F1F5F9] overflow-hidden shrink-0">
+                                <img src={item.image || '/placeholder-product.jpg'} className="h-full w-full object-contain p-2" alt="" />
+                              </div>
+                              <div className="min-w-0">
+                                <h4 className="text-sm font-bold text-[#1F2937] mb-1 truncate">{item.name}</h4>
+                                <p className="text-xs font-semibold text-[#6B7280] mb-2">Qty: {item.quantity}</p>
+                                <p className="text-sm font-bold text-[#1E3A8A]">₹{item.price.toFixed(0)}</p>
+                              </div>
                             </div>
-                            <div className="min-w-0">
-                              <h4 className="text-sm font-bold text-[#1F2937] mb-1 truncate">{item.name}</h4>
-                              <p className="text-xs font-semibold text-[#6B7280] mb-2">Qty: {item.quantity}</p>
-                              <p className="text-sm font-bold text-[#1E3A8A]">₹{item.price.toFixed(0)}</p>
+                          ))}
+                        </div>
+
+                        {/* Tracking Timeline */}
+                        <div className="pt-6 border-t border-[#F3F4F6]">
+                          <p className="text-[10px] font-bold text-[#9CA3AF] uppercase tracking-widest mb-4">Tracking Details</p>
+                          <div className="relative">
+                            <div className="absolute left-3 top-0 bottom-0 w-0.5 bg-[#F1F5F9]"></div>
+                            <div className="space-y-6 relative">
+                              <TimelineStep 
+                                label="Order Placed" 
+                                active={true} 
+                                completed={true} 
+                              />
+                              <TimelineStep 
+                                label="Confirmed" 
+                                active={['confirmed', 'processing', 'shipped', 'delivered'].includes(order.orderStatus)} 
+                                completed={['confirmed', 'processing', 'shipped', 'delivered'].includes(order.orderStatus)} 
+                              />
+                              <TimelineStep 
+                                label="Shipped" 
+                                active={['shipped', 'delivered'].includes(order.orderStatus)} 
+                                completed={['shipped', 'delivered'].includes(order.orderStatus)} 
+                              />
+                              <TimelineStep 
+                                label="Delivered" 
+                                active={order.orderStatus === 'delivered'} 
+                                completed={order.orderStatus === 'delivered'} 
+                                isLast={true}
+                              />
                             </div>
                           </div>
-                        ))}
+                        </div>
                       </div>
 
                       {/* Shipping & Actions */}
@@ -198,5 +240,26 @@ const Orders = () => {
     </div>
   )
 }
+
+const TimelineStep = ({ label, active, completed, isLast }) => (
+  <div className="flex items-start gap-4">
+    <div className={`h-6 w-6 rounded-full border-2 z-10 flex items-center justify-center transition-colors ${
+      completed ? 'bg-[#1E3A8A] border-[#1E3A8A] text-white' : 
+      active ? 'bg-white border-[#1E3A8A] text-[#1E3A8A]' : 'bg-white border-[#E5E7EB] text-[#CBD5E1]'
+    }`}>
+      {completed ? (
+        <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={4} d="M5 13l4 4L19 7" />
+        </svg>
+      ) : (
+        <div className={`h-1.5 w-1.5 rounded-full ${active ? 'bg-[#1E3A8A]' : 'bg-[#E5E7EB]'}`}></div>
+      )}
+    </div>
+    <div className="-mt-0.5">
+      <p className={`text-xs font-bold ${active ? 'text-[#1F2937]' : 'text-[#9CA3AF]'}`}>{label}</p>
+      {active && !completed && <p className="text-[10px] text-[#1E3A8A] font-medium mt-0.5">In progress</p>}
+    </div>
+  </div>
+)
 
 export default Orders

@@ -1,73 +1,89 @@
-import React, { useState } from 'react'
-import { Button } from './ui/button.jsx'
-import { Link, useNavigate } from 'react-router-dom'
-import { ArrowRight, Truck, ShieldCheck, Headphones } from 'lucide-react'
+import React from 'react'
+import { Link } from 'react-router-dom'
+import { ArrowRight, Truck, ShieldCheck, RotateCcw, HelpCircle } from 'lucide-react'
 
 const HeroBanner = () => {
   return (
-    <section className="relative bg-[#1E3A8A] overflow-hidden" style={{ minHeight: '70vh' }}>
-      {/* Subtle pattern overlay */}
-      <div className="absolute inset-0 opacity-[0.04]"
+    <section className="relative min-h-[85vh] flex items-center bg-[#1E3A8A] overflow-hidden">
+      {/* Background Subtle Grid */}
+      <div className="absolute inset-0 opacity-[0.05]"
         style={{ backgroundImage: 'radial-gradient(circle at 1px 1px, white 1px, transparent 0)', backgroundSize: '40px 40px' }}>
       </div>
 
-      <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-28 pb-20 lg:pt-32 lg:pb-24">
-        <div className="grid lg:grid-cols-2 gap-12 items-center">
-          {/* Text left */}
+      <div className="relative w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-12 pt-32 pb-24 md:pt-40 md:pb-32">
+        <div className="lg:grid lg:grid-cols-2 gap-12 items-center">
+          {/* Left: Text Section */}
           <div className="text-left">
-            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/10 border border-white/15 text-white/90 text-sm font-medium mb-6">
-              <span className="h-1.5 w-1.5 rounded-full bg-[#F97316] animate-pulse"></span>
+            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/10 border border-white/10 text-white text-xs font-medium mb-8">
+              <span className="h-1.5 w-1.5 rounded-full bg-[#F97316]"></span>
               New Collection 2026
             </div>
 
-            <h1 className="text-4xl md:text-5xl lg:text-[56px] font-bold text-white mb-6 leading-[1.15] tracking-tight"
-              style={{ fontFamily: 'Poppins, sans-serif' }}>
-              Discover Premium<br />Products at the<br />
+            <h1 className="text-3xl md:text-5xl lg:text-6xl font-bold text-white mb-6 leading-[1.1]" style={{ fontFamily: 'Poppins, sans-serif' }}>
+              Discover Premium<br /> 
+              Products at the<br />
               <span className="text-[#F97316]">Best Prices</span>
             </h1>
 
-            <p className="text-lg text-white/70 mb-8 max-w-lg leading-relaxed" style={{ fontFamily: 'Inter, sans-serif' }}>
-              Shop from thousands of curated products with fast delivery, secure payments, and exceptional customer service.
+            <p className="text-sm md:text-base text-white/70 mb-10 max-w-lg leading-relaxed">
+              Shop from thousands of curated products with fast delivery, 
+              secure payments, and exceptional customer service.
             </p>
 
-            <div className="flex flex-col sm:flex-row gap-3">
+            <div className="flex flex-wrap gap-4 mb-12">
               <Link to="/products">
-                <button className="h-12 px-8 bg-[#F97316] hover:bg-[#EA580C] text-white rounded-xl text-base font-semibold shadow-lg shadow-orange-500/20 hover:shadow-orange-500/30 transition-all duration-200 flex items-center gap-2 active:scale-[0.98]">
+                <button className="h-14 px-10 bg-[#FF7D29] hover:bg-[#F97316] text-white rounded-2xl text-base font-bold transition-all shadow-lg shadow-orange-500/20 flex items-center gap-2">
                   Shop Now
                   <ArrowRight className="h-4 w-4" />
                 </button>
               </Link>
-              <Link to="/products?featured=true">
-                <button className="h-12 px-8 bg-white/10 hover:bg-white/15 text-white rounded-xl text-base font-semibold border border-white/20 transition-all duration-200 active:scale-[0.98]">
+              <Link to="/products?deals=true">
+                <button className="h-14 px-10 bg-white/10 hover:bg-white/15 text-white border border-white/10 rounded-2xl text-base font-bold transition-all backdrop-blur-sm">
                   View Deals
                 </button>
               </Link>
             </div>
 
-            {/* Trust indicators */}
-            <div className="flex flex-wrap gap-6 mt-10 pt-8 border-t border-white/10">
-              <TrustItem icon={<Truck className="h-4 w-4" />} text="Free Shipping" />
-              <TrustItem icon={<ShieldCheck className="h-4 w-4" />} text="Secure Payment" />
-              <TrustItem icon={<Headphones className="h-4 w-4" />} text="24/7 Support" />
+            {/* Bottom: Service Items */}
+            <div className="flex flex-wrap items-center gap-8 pt-6 border-t border-white/10">
+              <div className="flex items-center gap-2 text-white/60 text-sm">
+                <div className="h-8 w-8 rounded-lg bg-white/5 flex items-center justify-center">
+                  <Truck className="h-4 w-4" />
+                </div>
+                Free Shipping
+              </div>
+              <div className="flex items-center gap-2 text-white/60 text-sm">
+                <div className="h-8 w-8 rounded-lg bg-white/5 flex items-center justify-center">
+                  <ShieldCheck className="h-4 w-4" />
+                </div>
+                Secure Payment
+              </div>
+              <div className="flex items-center gap-2 text-white/60 text-sm">
+                <div className="h-8 w-8 rounded-lg bg-white/5 flex items-center justify-center">
+                  <HelpCircle className="h-4 w-4" />
+                </div>
+                24/7 Support
+              </div>
             </div>
           </div>
 
-          {/* Image right */}
-          <div className="hidden lg:block relative">
+          {/* Right: Image Section with Floating Card */}
+          <div className="relative mt-12 lg:mt-0">
             <div className="relative z-10">
               <img
-                src="https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=700&q=80"
-                alt="Shopping Experience"
-                className="rounded-2xl shadow-2xl w-full h-auto max-h-[480px] object-cover"
+                src="https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=1200&q=80"
+                alt="Boutique Shop Interior"
+                className="rounded-[2.5rem] shadow-2xl w-full h-[400px] lg:h-[500px] object-cover border-4 border-white/5"
               />
-              {/* Floating card */}
-              <div className="absolute -bottom-6 -left-6 bg-white rounded-xl shadow-lg px-5 py-4 flex items-center gap-3">
-                <div className="h-10 w-10 rounded-full bg-green-100 flex items-center justify-center">
-                  <CheckCircle className="h-5 w-5 text-green-600" />
+              
+              {/* Floating Trusted Card */}
+              <div className="absolute -bottom-6 -left-6 lg:-left-12 bg-white p-4 lg:p-6 rounded-3xl shadow-2xl flex items-center gap-4 animate-bounce-slow">
+                <div className="h-12 w-12 lg:h-14 lg:w-14 bg-green-50 rounded-full flex items-center justify-center">
+                  <ShieldCheck className="h-6 w-6 lg:h-7 lg:w-7 text-green-500" />
                 </div>
                 <div>
-                  <p className="text-[#1F2937] font-semibold text-sm">Trusted by 10K+</p>
-                  <p className="text-[#9CA3AF] text-xs">Happy customers</p>
+                  <div className="text-base lg:text-lg font-bold text-[#1F2937]">Trusted by 10K+</div>
+                  <div className="text-xs lg:text-sm text-[#6B7280]">Happy customers</div>
                 </div>
               </div>
             </div>
@@ -77,20 +93,5 @@ const HeroBanner = () => {
     </section>
   )
 }
-
-const TrustItem = ({ icon, text }) => (
-  <div className="flex items-center gap-2 text-white/80">
-    <div className="h-8 w-8 rounded-lg bg-white/10 flex items-center justify-center">
-      {icon}
-    </div>
-    <span className="text-sm font-medium">{text}</span>
-  </div>
-)
-
-const CheckCircle = ({ className }) => (
-  <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-  </svg>
-)
 
 export default HeroBanner

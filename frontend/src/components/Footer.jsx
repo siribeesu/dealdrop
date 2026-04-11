@@ -19,12 +19,12 @@ const Footer = () => {
               </span>
             </div>
             <p className="text-white/60 text-sm leading-relaxed max-w-xs">
-              Your trusted destination for premium products at unbeatable prices. Shop with confidence.
+              Your go-to fashion destination for premium clothing, footwear, and accessories at unbeatable prices. Dress your best every day.
             </p>
 
             {/* Newsletter */}
             <div className="pt-2">
-              <p className="text-xs font-semibold uppercase tracking-wider text-white/80 mb-3">Stay Updated</p>
+              <p className="text-xs font-semibold uppercase tracking-wider text-white/80 mb-3">Style Updates</p>
               <div className="relative max-w-xs">
                 <input
                   type="email"
@@ -42,10 +42,12 @@ const Footer = () => {
           <FooterSection
             title="Shop"
             links={[
-              { label: 'All Products', to: '/products' },
-              { label: 'New Arrivals', to: '/products?sort=newest' },
-              { label: 'Featured', to: '/products' },
-              { label: 'Categories', to: '/products' }
+              { label: "Men's Fashion", to: '/products?category=Shirts' },
+              { label: "Women's Fashion", to: '/products?category=Dresses' },
+              { label: 'Footwear', to: '/products?category=Footwear' },
+              { label: 'Jackets & Coats', to: '/products?category=Jackets' },
+              { label: 'Activewear', to: '/products?category=Activewear' },
+              { label: 'Accessories', to: '/products?category=Accessories' },
             ]}
           />
 
@@ -53,10 +55,10 @@ const Footer = () => {
           <FooterSection
             title="Help"
             links={[
-              { label: 'Help Center', to: '/#' },
-              { label: 'Shipping Info', to: '/#' },
-              { label: 'Return Policy', to: '/#' },
-              { label: 'Track Order', to: '/#' },
+              { label: 'Help Center', to: '/help' },
+              { label: 'Shipping Info', to: '/shipping' },
+              { label: 'Return Policy', to: '/returns' },
+              { label: 'Size Guide', to: '/size-guide' },
               { label: 'Admin Access', to: '/admin-login' }
             ]}
           />
@@ -82,7 +84,7 @@ const Footer = () => {
         {/* Bottom Bar */}
         <div className="pt-8 border-t border-white/10 flex flex-col sm:flex-row justify-between items-center gap-4">
           <p className="text-white/40 text-sm">
-            &copy; 2026 DealDrop. All rights reserved.
+            &copy; 2026 DealDrop Fashion. All rights reserved.
           </p>
           <div className="flex items-center gap-6">
             <Link to="/#" className="text-white/40 hover:text-white text-sm transition-colors">Privacy</Link>

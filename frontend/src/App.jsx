@@ -20,17 +20,20 @@ import AdminLogin from './pages/AdminLogin.jsx'
 import ForgotPassword from './pages/ForgotPassword.jsx'
 import ResetPassword from './pages/ResetPassword.jsx'
 import Wishlist from './pages/Wishlist.jsx'
+import { HelpCenter, ShippingInfo, ReturnPolicy, SizeGuide } from './pages/StaticPages.jsx'
 import ScrollToTop from './components/ScrollToTop.jsx'
+import MobileNav from './components/ui/MobileNav.jsx'
 
 
 const PageLayout = ({ children, hasPadding = true }) => (
   <div className="flex flex-col min-h-screen">
     <ScrollToTop />
     <Navbar />
-    <main className={`flex-grow ${hasPadding ? 'pt-20' : ''}`}>
+    <main className={`flex-grow ${hasPadding ? 'pt-20' : ''} pb-20 lg:pb-0`}>
       {children}
     </main>
     <Footer />
+    <MobileNav />
   </div>
 )
 
@@ -96,6 +99,22 @@ const router = createBrowserRouter([
     element: <ProtectedRoute><PageLayout><Wishlist /></PageLayout></ProtectedRoute>
   },
 
+  {
+    path: '/help',
+    element: <PageLayout><HelpCenter /></PageLayout>
+  },
+  {
+    path: '/shipping',
+    element: <PageLayout><ShippingInfo /></PageLayout>
+  },
+  {
+    path: '/returns',
+    element: <PageLayout><ReturnPolicy /></PageLayout>
+  },
+  {
+    path: '/size-guide',
+    element: <PageLayout><SizeGuide /></PageLayout>
+  },
 ])
 
 const App = () => {

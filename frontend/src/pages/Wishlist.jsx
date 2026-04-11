@@ -9,7 +9,7 @@ const Wishlist = () => {
 
     if (!isAuthenticated) {
         return (
-            <div className="min-h-screen bg-[#F8FAFC] pt-24 pb-20 flex items-center justify-center">
+            <div className="min-h-screen bg-[#F8FAFC] pb-20 flex items-center justify-center">
                 <div className="max-w-md w-full px-6 text-center">
                     <div className="h-24 w-24 bg-white rounded-full flex items-center justify-center mx-auto mb-8 shadow-sm border border-[#E5E7EB]">
                         <Heart className="h-10 w-10 text-red-400" />
@@ -36,10 +36,10 @@ const Wishlist = () => {
     }
 
     return (
-        <div className="min-h-screen bg-[#F8FAFC] pt-24 pb-20">
+        <div className="min-h-screen bg-[#F8FAFC] pb-20">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 {/* Header */}
-                <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-12">
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-12 pt-8">
                     <div>
                         <h1 className="text-3xl font-bold text-[#1F2937] mb-2" style={{ fontFamily: 'Poppins, sans-serif' }}>
                             My Favorites
@@ -56,7 +56,7 @@ const Wishlist = () => {
                 </div>
 
                 {wishlist && wishlist.length > 0 ? (
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                    <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6">
                         {wishlist.map((product) => (
                             <ProductCard key={product._id} product={product} />
                         ))}

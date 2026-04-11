@@ -67,7 +67,7 @@ const Cart = () => {
 
   if (validCartItems.length === 0) {
     return (
-      <div className="min-h-screen bg-[#F8FAFC] pt-24 pb-20">
+      <div className="min-h-screen bg-[#F8FAFC] pb-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center py-20">
           <div className="h-24 w-24 bg-white rounded-full flex items-center justify-center mx-auto mb-6 shadow-sm border border-[#E5E7EB]">
             <ShoppingBag className="w-10 h-10 text-[#9CA3AF]" />
@@ -89,22 +89,31 @@ const Cart = () => {
   }
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC] pt-20 pb-20">
+    <div className="min-h-screen bg-[#F8FAFC] md:pt-24 pt-4 pb-20">
       <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
 
         {/* Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-8">
-          <div>
-            <h1 className="text-2xl sm:text-3xl font-bold text-[#1F2937]" style={{ fontFamily: 'Poppins, sans-serif' }}>
-              Shopping Cart
-            </h1>
-            <p className="text-sm font-medium text-[#6B7280] mt-1">
-              {validCartItems.length} item{validCartItems.length !== 1 ? 's' : ''} in your cart
-            </p>
+        <div className="flex flex-col gap-4 mb-8">
+          <button 
+            onClick={() => window.history.back()}
+            className="w-fit flex items-center gap-2 text-[#6B7280] hover:text-[#1E3A8A] transition-colors font-bold text-sm"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            Back
+          </button>
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div>
+              <h1 className="text-2xl sm:text-3xl font-bold text-[#1F2937]" style={{ fontFamily: 'Poppins, sans-serif' }}>
+                Shopping Cart
+              </h1>
+              <p className="text-sm font-medium text-[#6B7280] mt-1">
+                {validCartItems.length} item{validCartItems.length !== 1 ? 's' : ''} in your cart
+              </p>
+            </div>
+            <Link to="/products" className="flex items-center gap-2 text-sm font-semibold text-[#1E3A8A] hover:text-[#2563EB] transition-colors self-start sm:self-auto">
+              Continue Shopping
+            </Link>
           </div>
-          <Link to="/products" className="flex items-center gap-2 text-sm font-semibold text-[#1E3A8A] hover:text-[#2563EB] transition-colors self-start sm:self-auto">
-            <ArrowLeft className="h-4 w-4" /> Continue Shopping
-          </Link>
         </div>
 
         {error && <div className="mb-4 p-4 bg-red-50 text-red-600 rounded-xl text-sm font-semibold">{error}</div>}
@@ -253,11 +262,6 @@ const Cart = () => {
                 </div>
               </div>
 
-              {shipping > 0 && (
-                <p className="mt-5 p-3 bg-orange-50 rounded-xl text-[11px] font-bold text-[#F97316] text-center border border-orange-100">
-                  🎉 Add ₹{(499 - subtotal).toFixed(0)} more for FREE shipping!
-                </p>
-              )}
             </div>
           </div>
         </div>

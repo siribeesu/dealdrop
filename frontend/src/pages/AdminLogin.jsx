@@ -45,7 +45,7 @@ const AdminLogin = () => {
                         <Logo dark={true} />
                     </Link>
                     <h1 className="text-3xl font-bold text-white mb-2" style={{ fontFamily: 'Poppins, sans-serif' }}>Admin Console</h1>
-                    <p className="text-slate-400 font-medium">Secure authentication for DealDrop </p>
+                    <p className="text-slate-400 font-medium">Secure authentication for DealDrop</p>
                 </div>
 
                 <div className="bg-[#1E293B] border border-white/5 p-8 lg:p-10 rounded-[2.5rem] shadow-2xl">
@@ -101,6 +101,12 @@ const AdminLogin = () => {
                                 </>
                             )}
                         </button>
+                        
+                        <div className="mt-6 flex flex-col items-center p-3 rounded-xl bg-blue-500/10 border border-blue-500/20">
+                            <p className="text-[10px] text-blue-400 font-bold mb-1 uppercase tracking-wider">Test Credentials</p>
+                            <p className="text-xs text-slate-300 font-mono">admin@dealdrop.com</p>
+                            <p className="text-xs text-slate-300 font-mono">adminpassword123</p>
+                        </div>
                     </form>
 
                     <div className="mt-10 pt-8 border-t border-white/5 flex flex-col items-center gap-4">
