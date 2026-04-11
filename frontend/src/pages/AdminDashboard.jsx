@@ -172,11 +172,44 @@ const AdminDashboard = () => {
     if (window.confirm('Are you sure you want to delete this product?')) {
       try {
         await productsAPI.deleteProduct(id)
-        // Remove from local state without re-fetching
         setProducts(prev => prev.filter(p => p._id !== id))
         setDashboardStats(prev => ({ ...prev, totalProducts: prev.totalProducts - 1 }))
       } catch (err) { alert('Delete failed') }
     }
+  }
+
+  const handleToggleProductStatus = async (product) => {
+    const newStatus = product.status === 'active' ? 'inactive' : 'active'
+    try {
+      const resp = await productsAPI.updateProduct(product._id, { status: newStatus })
+      if (resp.success) {
+        setProducts(prev => prev.map(p => p._id === product._id ? { ...p, status: newStatus } : p))
+      }
+    } catch (err) { alert('Status update failed') }
+  }
+
+  const handleDeleteUser = async (id) => {
+    if (window.confirm('Are you sure you want to PERMANENTLY delete this user? This cannot be undone.')) {
+      try {
+        await adminAPI.deleteUser(id)
+        setUsers(prev => prev.filter(u => u._id !== id))
+        setDashboardStats(prev => ({ ...prev, totalUsers: prev.totalUsers - 1 }))
+        if (selectedUser?._id === id) setSelectedUser(null)
+      } catch (err) { alert(err.data?.message || 'Delete failed') }
+    }
+  }
+
+  const handleToggleUserStatus = async (userRecord) => {
+    const newStatus = userRecord.status === 'active' ? 'suspended' : 'active'
+    try {
+      const resp = await adminAPI.updateUser(userRecord._id, { status: newStatus })
+      if (resp.success) {
+        setUsers(prev => prev.map(u => u._id === userRecord._id ? { ...u, status: newStatus } : u))
+        if (selectedUser?._id === userRecord._id) {
+          setSelectedUser({ ...selectedUser, status: newStatus })
+        }
+      }
+    } catch (err) { alert('Status update failed') }
   }
 
   if (loading) return (
@@ -270,10 +303,11 @@ const AdminDashboard = () => {
                 setShowAddForm(true);
               }}
               onDelete={handleDeleteProduct}
+              onToggleStatus={handleToggleProductStatus}
               onAdd={() => { setEditingProduct(null); setShowAddForm(true); }}
             />
           )}
-          {activeTab === 'customers' && <CustomersManager users={users} onDetails={setSelectedUser} />}
+          {activeTab === 'customers' && <CustomersManager users={users} onDetails={setSelectedUser} onToggleStatus={handleToggleUserStatus} onDelete={handleDeleteUser} />}
           {['analytics', 'messages'].includes(activeTab) && (
             <div className="flex flex-col items-center justify-center py-20 bg-white rounded-2xl border border-[#E5E7EB] shadow-sm">
               <div className="h-16 w-16 bg-slate-50 text-slate-400 rounded-full flex items-center justify-center mb-4">
@@ -386,7 +420,9 @@ const AdminDashboard = () => {
               </div>
               <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100">
                 <p className="text-[10px] font-bold text-slate-400 uppercase mb-1">Activity</p>
-                <p className="text-sm font-bold text-slate-900">Active</p>
+                <p className={`text-sm font-bold capitalize ${selectedUser.status === 'suspended' ? 'text-red-600' : 'text-green-600'}`}>
+                  {selectedUser.status || 'active'}
+                </p>
               </div>
             </div>
 
@@ -398,16 +434,32 @@ const AdminDashboard = () => {
                   <span className="font-mono text-slate-700 text-xs">{selectedUser._id}</span>
                 </div>
                 <div className="flex justify-between items-center text-sm">
-                  <span className="text-slate-500">Email Preference</span>
-                  <span className="text-slate-900 font-medium underline">Opt-in</span>
+                  <span className="text-slate-500">Verification</span>
+                  <span className={`font-medium ${selectedUser.isVerified ? 'text-green-600' : 'text-amber-600'}`}>
+                    {selectedUser.isVerified ? 'Verified' : 'Pending'}
+                  </span>
                 </div>
               </div>
             </div>
           </div>
 
-          <button className="w-full h-11 border-2 border-red-100 text-red-600 font-bold rounded-xl hover:bg-red-50 transition-all text-xs">
-            Deactivate Account
-          </button>
+          <div className="grid grid-cols-1 gap-3">
+            <button
+              onClick={() => handleToggleUserStatus(selectedUser)}
+              className={`w-full h-11 border-2 font-bold rounded-xl transition-all text-xs ${selectedUser.status === 'suspended'
+                  ? 'border-green-100 text-green-600 hover:bg-green-50'
+                  : 'border-amber-100 text-amber-600 hover:bg-amber-50'
+                }`}
+            >
+              {selectedUser.status === 'suspended' ? 'Activate Account' : 'Suspend Account'}
+            </button>
+            <button
+              onClick={() => handleDeleteUser(selectedUser._id)}
+              className="w-full h-11 border-2 border-red-100 text-red-600 font-bold rounded-xl hover:bg-red-50 transition-all text-xs"
+            >
+              Delete Permanently
+            </button>
+          </div>
         </SideDrawer>
       )}
 
@@ -671,7 +723,7 @@ const StatCard = ({ title, value, icon, trend }) => (
   </div>
 )
 
-const ProductsManager = ({ products, onEdit, onDelete, onAdd }) => {
+const ProductsManager = ({ products, onEdit, onDelete, onAdd, onToggleStatus }) => {
   const [search, setSearch] = useState('')
   const [categoryFilter, setCategoryFilter] = useState('All')
 
@@ -781,13 +833,16 @@ const ProductsManager = ({ products, onEdit, onDelete, onAdd }) => {
                     </td>
                     <td className="px-8 py-4">
                       <div className="flex items-center gap-1.5">
-                        <div className={`h-1.5 w-1.5 rounded-full ${(p.inventory?.quantity || 0) > 0 ? 'bg-[#16A34A]' : 'bg-[#DC2626]'}`}></div>
-                        <span className={`text-[10px] font-bold uppercase ${(p.inventory?.quantity || 0) > 0 ? 'text-[#16A34A]' : 'text-[#DC2626]'}`}>{(p.inventory?.quantity || 0) > 0 ? 'Active' : 'Out of Stock'}</span>
+                        <div className={`h-1.5 w-1.5 rounded-full ${p.status === 'active' ? 'bg-[#16A34A]' : 'bg-[#DC2626]'}`}></div>
+                        <span className={`text-[10px] font-bold uppercase ${p.status === 'active' ? 'text-[#16A34A]' : 'text-[#DC2626]'}`}>{p.status || 'Active'}</span>
                       </div>
                     </td>
                     <td className="px-8 py-4 text-right space-x-2">
+                      <button onClick={() => onToggleStatus(p)} title={p.status === 'active' ? 'Deactivate' : 'Activate'} className={`p-2.5 rounded-xl transition-all border ${p.status === 'active' ? 'text-amber-600 border-amber-200 hover:bg-amber-50' : 'text-green-600 border-green-200 hover:bg-green-50'}`}>
+                        {p.status === 'active' ? <ShieldCheck size={16} className="text-amber-500" /> : <Activity size={16} className="text-green-500" />}
+                      </button>
                       <button onClick={() => onEdit(p)} className="p-2.5 text-[#1E3A8A] hover:bg-[#1E3A8A]/5 border border-[#1E3A8A]/20 rounded-xl transition-all"><Edit size={16} /></button>
-                      <button onClick={() => onDelete(p._id)} className="p-2.5 text-[#DC2626] hover:bg-[#DC2626]/5 rounded-xl transition-all"><Trash2 size={16} /></button>
+                      <button onClick={() => onDelete(p._id)} className="p-2.5 text-[#DC2626] hover:bg-[#DC2626]/5 rounded-xl transition-all border border-red-100"><Trash2 size={16} /></button>
                     </td>
                   </tr>
                 ))
@@ -903,7 +958,7 @@ const OrdersManager = ({ orders, onDetails }) => (
   </div>
 )
 
-const CustomersManager = ({ users, onDetails }) => (
+const CustomersManager = ({ users, onDetails, onToggleStatus, onDelete }) => (
   <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-500">
     <div className="flex items-center justify-between gap-6 bg-white p-6 rounded-2xl border border-[#E5E7EB] shadow-sm">
       <div className="relative w-96 group">
@@ -933,14 +988,14 @@ const CustomersManager = ({ users, onDetails }) => (
           <tbody className="divide-y divide-[#E5E7EB]">
             {users.map((u, i) => (
               <tr key={i} className={`hover:bg-slate-50 transition-all cursor-pointer ${i % 2 === 1 ? 'bg-[#F8FAFC]/50' : ''}`}>
-                <td className="px-10 py-6">
+                <td className="px-10 py-6" onClick={() => onDetails(u)}>
                   <div className="flex items-center gap-4">
                     <div className="h-10 w-10 rounded-2xl bg-[#1E3A8A]/5 flex items-center justify-center text-[#1E3A8A] font-black border border-[#1E3A8A]/10 shadow-inner">
                       {u.firstName?.[0]}{u.lastName?.[0]}
                     </div>
                     <div>
                       <p className="text-sm font-bold text-slate-900 leading-none mb-1">{u.firstName} {u.lastName}</p>
-                      <p className="text-[10px] text-slate-400 font-medium">Verified Citizen</p>
+                      <p className="text-[10px] text-slate-400 font-medium">{u.isVerified ? 'Verified Citizen' : 'Pending Verification'}</p>
                     </div>
                   </div>
                 </td>
@@ -952,13 +1007,19 @@ const CustomersManager = ({ users, onDetails }) => (
                 </td>
                 <td className="px-10 py-6">
                   <div className="flex items-center gap-2">
-                    <div className={`h-1.5 w-1.5 rounded-full ${u.isVerified ? 'bg-[#16A34A]' : 'bg-[#DC2626]'} animate-pulse`}></div>
-                    <span className={`text-[10px] font-bold uppercase tracking-widest ${u.isVerified ? 'text-[#16A34A]' : 'text-[#DC2626]'}`}>{u.isVerified ? 'Synchronized' : 'Desynced'}</span>
+                    <div className={`h-1.5 w-1.5 rounded-full ${u.status === 'suspended' ? 'bg-red-500' : 'bg-green-500'}`}></div>
+                    <span className={`text-[10px] font-bold uppercase tracking-widest ${u.status === 'suspended' ? 'text-red-500' : 'text-green-500'}`}>
+                      {u.status || 'active'}
+                    </span>
                   </div>
                 </td>
                 <td className="px-10 py-6 text-xs text-slate-500 font-medium">{new Date(u.createdAt).toLocaleDateString()}</td>
-                <td className="px-10 py-6 text-right">
-                  <button onClick={() => onDetails(u)} className="p-2 text-slate-400 hover:text-[#1E3A8A] transition-colors"><User size={20} /></button>
+                <td className="px-10 py-6 text-right space-x-2">
+                  <button onClick={() => onToggleStatus(u)} title={u.status === 'suspended' ? 'Activate' : 'Suspend'} className={`p-2 rounded-lg transition-colors border ${u.status === 'suspended' ? 'text-green-600 border-green-100 hover:bg-green-50' : 'text-amber-600 border-amber-100 hover:bg-amber-50'}`}>
+                    {u.status === 'suspended' ? <CheckCircle size={18} /> : <X size={18} />}
+                  </button>
+                  <button onClick={() => onDetails(u)} className="p-2 text-slate-400 hover:text-[#1E3A8A] border border-slate-100 rounded-lg"><User size={18} /></button>
+                  <button onClick={() => onDelete(u._id)} className="p-2 text-red-400 hover:text-red-600 border border-red-50 border-red-100 rounded-lg"><Trash2 size={18} /></button>
                 </td>
               </tr>
             ))}

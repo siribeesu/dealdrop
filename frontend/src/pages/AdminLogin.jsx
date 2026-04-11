@@ -1,11 +1,12 @@
 import React, { useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
-import { Shield, Mail, Lock, AlertCircle, Loader2, ArrowLeft } from 'lucide-react'
+import { Shield, Mail, Lock, AlertCircle, Loader2, ArrowLeft, Eye, EyeOff } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext.jsx'
 import Logo from '../components/ui/Logo.jsx'
 
 const AdminLogin = () => {
     const [credentials, setCredentials] = useState({ email: '', password: '' })
+    const [showPassword, setShowPassword] = useState(false)
     const [error, setError] = useState('')
     const [loading, setLoading] = useState(false)
     const navigate = useNavigate()
@@ -78,14 +79,21 @@ const AdminLogin = () => {
                             <div className="relative group">
                                 <Lock className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-500 group-focus-within:text-blue-500 transition-colors" />
                                 <input
-                                    type="password"
+                                    type={showPassword ? 'text' : 'password'}
                                     name="password"
                                     value={credentials.password}
                                     onChange={handleChange}
                                     placeholder="••••••••"
-                                    className="w-full h-12 pl-12 pr-4 bg-black/20 border border-white/5 text-white placeholder:text-slate-600 rounded-xl focus:border-blue-500/50 transition-all outline-none font-semibold"
+                                    className="w-full h-12 pl-12 pr-12 bg-black/20 border border-white/5 text-white placeholder:text-slate-600 rounded-xl focus:border-blue-500/50 transition-all outline-none font-semibold"
                                     required
                                 />
+                                <button
+                                    type="button"
+                                    onClick={() => setShowPassword(!showPassword)}
+                                    className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-500 hover:text-white transition-colors"
+                                >
+                                    {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                                </button>
                             </div>
                         </div>
 

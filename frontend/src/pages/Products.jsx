@@ -81,19 +81,21 @@ const Products = () => {
       {/* Page Header */}
       <div className="bg-white border-b border-[#E5E7EB] pt-3 md:pt-4">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-4 pb-6">
-          <button 
-            onClick={() => window.history.back()}
-            className="flex items-center gap-2 text-[#6B7280] hover:text-[#1E3A8A] transition-colors font-bold text-sm mb-4"
-          >
-            <ArrowLeft className="h-4 w-4" />
-            Back
-          </button>
+          <div className="flex items-center gap-6 mb-8">
+            <button
+              onClick={() => window.history.back()}
+              className="flex items-center justify-center h-10 w-10 rounded-xl bg-white border border-[#E5E7EB] text-[#6B7280] hover:text-[#1E3A8A] hover:border-[#1E3A8A] hover:bg-blue-50 transition-all shadow-sm shrink-0"
+              title="Go Back"
+            >
+              <ArrowLeft className="h-5 w-5" />
+            </button>
+            <h1 className="text-3xl font-bold text-[#1F2937]" style={{ fontFamily: 'Poppins, sans-serif' }}>
+              All Fashion
+            </h1>
+          </div>
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div>
-              <h1 className="text-3xl font-bold text-[#1F2937]" style={{ fontFamily: 'Poppins, sans-serif' }}>
-                All Fashion
-              </h1>
-              <nav className="flex items-center gap-1.5 text-xs text-[#6B7280]">
+              <nav className="flex items-center gap-1.5 text-xs text-[#6B7280] ml-[64px]">
                 <a href="/" className="hover:text-[#1E3A8A]">Home</a>
                 <ChevronRight className="h-3 w-3" />
                 <span className="text-[#1F2937] font-semibold">Shop</span>

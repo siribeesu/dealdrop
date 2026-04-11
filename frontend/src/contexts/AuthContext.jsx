@@ -58,20 +58,28 @@ export const AuthProvider = ({ children }) => {
     }
   }
 
-  const register = async (userData) => {
+  const register = async (data) => {
     try {
-      const response = await authAPI.register(userData)
+      const response = await authAPI.registerOTP(data)
       return response
     } catch (error) {
-      console.error('Registration error:', error)
-      let message = error.data?.message || error.message || 'Registration failed. Please try again.'
-      if (error.data?.errors && Array.isArray(error.data.errors)) {
-        message = error.data.errors.map(err => typeof err === 'string' ? err : err.msg).join('. ')
+      return { success: false, message: error.data?.message || 'Process failed' }
+    }
+  }
+
+  const registerVerify = async (data) => {
+    try {
+      const response = await authAPI.registerVerify(data)
+      if (response.success) {
+        localStorage.setItem('token', response.token)
+        setUser(response.user)
+        setWishlist(response.user.wishlist || [])
+        setIsAuthenticated(true)
+        return { success: true, user: response.user }
       }
-      return {
-        success: false,
-        message: message
-      }
+      return { success: false, message: response.message }
+    } catch (error) {
+      return { success: false, message: error.data?.message || 'Creation failed' }
     }
   }
 
@@ -129,6 +137,48 @@ export const AuthProvider = ({ children }) => {
     }
   }
 
+  const googleLogin = async (tokenId) => {
+    try {
+      const response = await authAPI.googleLogin(tokenId)
+      if (response.success) {
+        localStorage.setItem('token', response.token)
+        setUser(response.user)
+        setWishlist(response.user.wishlist || [])
+        setIsAuthenticated(true)
+        return { success: true, user: response.user }
+      }
+      return { success: false, message: response.message }
+    } catch (error) {
+      return { success: false, message: error.data?.message || 'Google login failed' }
+    }
+  }
+
+  const sendOTP = async (identity) => {
+    try {
+      // identity should be { email } or { phoneNumber }
+      return await authAPI.sendOTP(identity)
+    } catch (error) {
+      return { success: false, message: error.data?.message || 'Failed to send OTP' }
+    }
+  }
+
+  const verifyOTP = async (identity, otp) => {
+    try {
+      // identity should be { email } or { phoneNumber }
+      const response = await authAPI.verifyOTP({ ...identity, otp })
+      if (response.success) {
+        localStorage.setItem('token', response.token)
+        setUser(response.user)
+        setWishlist(response.user.wishlist || [])
+        setIsAuthenticated(true)
+        return { success: true, user: response.user }
+      }
+      return { success: false, message: response.message }
+    } catch (error) {
+      return { success: false, message: error.data?.message || 'OTP verification failed' }
+    }
+  }
+
   const value = {
     user,
     loading,
@@ -137,6 +187,10 @@ export const AuthProvider = ({ children }) => {
     wishlist,
     login,
     register,
+    registerVerify,
+    googleLogin,
+    sendOTP,
+    verifyOTP,
     resendVerification: authAPI.resendVerification,
     logout,
     updateProfile,

@@ -2,140 +2,360 @@ const express = require('express');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const { body, validationResult } = require('express-validator');
+const { OAuth2Client } = require('google-auth-library');
 const User = require('../models/User');
+const OTP = require('../models/OTP');
 const sendEmail = require('../utils/email');
+const sendSMS = require('../utils/sms');
 const { protect } = require('../middleware/auth');
 
+const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 const router = express.Router();
 
-// @route   POST /api/auth/register
-// @desc    Register user
+// Helper to create token
+const createToken = (user) => {
+  return jwt.sign(
+    { id: user._id, role: user.role },
+    process.env.JWT_SECRET,
+    { expiresIn: process.env.JWT_EXPIRE || '7d' }
+  );
+};
+
+// @route   POST /api/auth/google-login
+// @desc    Login/Register with Google
 // @access  Public
-router.post('/register', [
-  body('firstName').trim().isLength({ min: 2 }).withMessage('First name must be at least 2 characters'),
-  body('lastName').trim().isLength({ min: 2 }).withMessage('Last name must be at least 2 characters'),
-  body('email').isEmail().withMessage('Please enter a valid email'),
-  body('password').isLength({ min: 6 }).withMessage('Password must be at least 6 characters')
-], async (req, res) => {
+router.post('/google-login', async (req, res) => {
   try {
-    // Check for validation errors
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      return res.status(400).json({
-        success: false,
-        message: 'Validation failed',
-        errors: errors.array()
-      });
-    }
-
-    const { firstName, lastName, email, password } = req.body;
-
-    // Check if user already exists
-    const existingUser = await User.findOne({ email });
-    if (existingUser) {
-      if (existingUser.isVerified) {
-        return res.status(400).json({
-          success: false,
-          message: 'User with this email already exists'
-        });
-      } else {
-        // Unverified existing user: just auto-verify and let them login
-        existingUser.isVerified = true;
-        existingUser.verificationToken = undefined;
-        existingUser.verificationTokenExpire = undefined;
-        await existingUser.save();
-        return res.status(200).json({
-          success: true,
-          message: 'Your account is now verified. Please login.'
-        });
-      }
-    }
-
-    // Create user
-    const user = await User.create({
-      firstName,
-      lastName,
-      email,
-      password
+    const { tokenId } = req.body;
+    const ticket = await client.verifyIdToken({
+      idToken: tokenId,
+      audience: process.env.GOOGLE_CLIENT_ID
     });
 
-    // Auto-verify user immediately (email verification skipped until domain is set up)
-    user.isVerified = true;
-    await user.save();
+    const { email, family_name, given_name, sub: googleId, picture } = ticket.getPayload();
 
-    res.status(201).json({
+    let user = await User.findOne({ email });
+
+    if (!user) {
+      // Create new user if not exists
+      user = await User.create({
+        firstName: given_name,
+        lastName: family_name || ' ',
+        email,
+        googleId,
+        isVerified: true, // Google accounts are pre-verified
+        profile: { avatar: picture }
+      });
+    } else if (!user.googleId) {
+      // Link Google ID if user exists but hasn't linked yet
+      user.googleId = googleId;
+      user.isVerified = true;
+      if (!user.profile.avatar) user.profile.avatar = picture;
+      await user.save();
+    }
+
+    const token = createToken(user);
+
+    res.json({
       success: true,
-      message: 'Account created successfully! You can now login.',
+      token,
       user: {
         id: user._id,
         firstName: user.firstName,
         lastName: user.lastName,
         email: user.email,
-        isVerified: true
+        role: user.role,
+        isVerified: user.isVerified,
+        avatar: user.profile.avatar
       }
     });
   } catch (error) {
-    console.error('Auth Route Error:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Server error',
-      error: error.message
+    console.error('Google Login Error:', error);
+    res.status(400).json({ success: false, message: 'Google login failed' });
+  }
+});
+
+// @route   POST /api/auth/send-otp
+// @desc    Send OTP to email/phone
+// @access  Public
+router.post('/send-otp', async (req, res) => {
+  try {
+    const { email, phoneNumber } = req.body;
+    let query = {};
+    if (email) query.email = email;
+    else if (phoneNumber) query.phoneNumber = phoneNumber;
+    else return res.status(400).json({ success: false, message: 'Email or phone number is required' });
+
+    let user = await User.findOne(query);
+
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'No account found. Please sign up.' });
+    }
+
+    const otp = user.generateOTP();
+    await user.save();
+
+    // Fallback log to console so user can always see the OTP in terminal
+    console.log(`\n-----------------------------------------`);
+    console.log(`🔑 VERIFICATION OTP: ${otp}`);
+    console.log(`👤 FOR IDENTITY: ${user.email || user.phoneNumber}`);
+    console.log(`-----------------------------------------\n`);
+
+    if (user.email) {
+      try {
+        await sendEmail({
+          email: user.email,
+          subject: 'One-Time Password (OTP) - DealDrop',
+          message: `Your OTP for verification is: ${otp}. Valid for 10 minutes.`,
+          html: `
+            <div style="font-family: sans-serif; text-align: center; padding: 20px; border: 1px solid #eee; border-radius: 10px;">
+              <h2 style="color: #1E3A8A;">Verification Code</h2>
+              <p>Use the following 6-digit code to verify your account:</p>
+              <div style="font-size: 32px; font-weight: bold; letter-spacing: 5px; color: #F97316; margin: 20px 0;">
+                ${otp}
+              </div>
+              <p style="color: #666; font-size: 12px;">Valid for 10 minutes. Do not share this with anyone.</p>
+            </div>
+          `
+        });
+      } catch (emailError) {
+        console.error('⚠️ SMTP Failed but OTP is available in console.');
+      }
+    }
+
+    if (user.phoneNumber) {
+      // Send Real SMS
+      await sendSMS(
+        user.phoneNumber,
+        `Your DealDrop verification code is: ${otp}`
+      );
+    }
+
+    res.json({ 
+      success: true, 
+      message: user.email ? 'OTP sent to your email' : 'OTP sent to your phone' 
+    });
+  } catch (error) {
+    console.error('Send OTP Error:', error);
+    res.status(500).json({ success: false, message: 'Failed to send OTP' });
+  }
+});
+
+// @route   POST /api/auth/verify-otp
+// @desc    Verify OTP and login/verify
+// @access  Public
+// @route   POST /api/auth/register-otp
+// @desc    Send OTP to email/phone for registration
+// @access  Public
+router.post('/register-otp', async (req, res) => {
+  try {
+    const { email, phoneNumber } = req.body;
+    
+    if (!email && !phoneNumber) {
+      return res.status(400).json({ success: false, message: 'Email or Phone Number is required' });
+    }
+
+    // Check if user already exists
+    let query = [];
+    if (email) query.push({ email });
+    if (phoneNumber) query.push({ phoneNumber });
+
+    const existingUser = await User.findOne({ $or: query });
+    if (existingUser) {
+      return res.status(400).json({ success: false, message: 'Account already exists with this identity.' });
+    }
+
+    // Generate 6-digit OTP
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    const identity = email || phoneNumber;
+
+    // Save/Update OTP in temporary collection
+    await OTP.findOneAndUpdate(
+      { identity },
+      { otp, expiresAt: Date.now() + 10 * 60 * 1000 },
+      { upsert: true }
+    );
+
+    // Terminal Logging (Fallback)
+    console.log(`\n-----------------------------------------`);
+    console.log(`🔑 REGISTRATION OTP: ${otp}`);
+    console.log(`👤 FOR: ${identity}`);
+    console.log(`-----------------------------------------\n`);
+
+    // Send SMS if applicable
+    if (phoneNumber) {
+      await sendSMS(
+        phoneNumber,
+        `DealDrop Registration Code: ${otp}`
+      );
+    }
+    if (email) {
+      try {
+        await sendEmail({
+          email,
+          subject: 'Verify Your DealDrop Account',
+          message: `Your verification code is: ${otp}`,
+          html: `
+            <div style="font-family: sans-serif; text-align: center; padding: 20px; border: 1px solid #eee; border-radius: 10px;">
+              <h2 style="color: #1E3A8A;">Welcome to DealDrop!</h2>
+              <p>Use the following code to verify your identity and create your account:</p>
+              <div style="font-size: 32px; font-weight: bold; letter-spacing: 5px; color: #F97316; margin: 20px 0;">
+                ${otp}
+              </div>
+              <p style="color: #666; font-size: 12px;">Valid for 10 minutes. Do not share this with anyone.</p>
+            </div>
+          `
+        });
+      } catch (err) { console.error('SMTP Error:', err.message); }
+    }
+
+    res.json({ success: true, message: 'Verification code sent!' });
+  } catch (error) {
+    console.error('Register OTP Error:', error);
+    res.status(500).json({ success: false, message: 'Process failed' });
+  }
+});
+
+// @route   POST /api/auth/register-verify
+// @desc    Verify OTP and CREATE user account
+// @access  Public
+router.post('/register-verify', async (req, res) => {
+  try {
+    const { firstName, lastName, email, phoneNumber, password, otp } = req.body;
+    const identity = email || phoneNumber;
+
+    console.log(`[DEBUG] Verify Request for: ${identity} with OTP: ${otp}`);
+
+    if (!identity) {
+      return res.status(400).json({ success: false, message: 'Identity missing' });
+    }
+
+    // 1. Verify OTP from temporary collection
+    const otpRecord = await OTP.findOne({ identity, otp });
+    console.log(`[DEBUG] OTP Record found:`, otpRecord ? 'YES' : 'NO');
+    
+    if (!otpRecord) {
+      return res.status(400).json({ success: false, message: 'Invalid or expired code' });
+    }
+
+    // 2. Check for race condition
+    const existingUser = await User.findOne({ 
+      $or: [
+        email ? { email } : { _none: 1 }, 
+        phoneNumber ? { phoneNumber } : { _none: 1 }
+      ] 
+    });
+    console.log(`[DEBUG] Existing User Check:`, existingUser ? 'FOUND' : 'NONE');
+    
+    if (existingUser) {
+      await OTP.deleteOne({ identity, otp });
+      return res.status(400).json({ success: false, message: 'Account already exists.' });
+    }
+
+    // 3. Clear the OTP record
+    await OTP.deleteOne({ identity, otp });
+
+    // 4. Create the account
+    console.log(`[DEBUG] Attempting User.create for: ${firstName} ${lastName}`);
+    const userPayload = {
+      firstName,
+      lastName,
+      password,
+      isVerified: true
+    };
+    if (email) userPayload.email = email;
+    if (phoneNumber) userPayload.phoneNumber = phoneNumber;
+
+    const user = await User.create(userPayload);
+    console.log(`[DEBUG] User created successfully:`, user._id);
+
+    const token = createToken(user);
+
+    res.status(201).json({
+      success: true,
+      message: 'Account created successfully!',
+      token,
+      user: {
+        id: user._id,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        email: user.email,
+        phoneNumber: user.phoneNumber,
+        role: user.role
+      }
+    });
+  } catch (error) {
+    console.error('❌ Registration Verify Error:', error);
+    
+    if (error.code === 11000) {
+      return res.status(400).json({ success: false, message: 'Account already exists.' });
+    }
+    
+    res.status(500).json({ 
+      success: false, 
+      message: error.message || 'Failed to create account',
+      debug_error: error.message 
     });
   }
+});
+
+// @route   POST /api/auth/register
+// @desc    Register user
+// @access  Public
+// Legacy register removed - replaced by register-otp and register-verify.
+// Legacy verify-otp removed - replaced by logic above and/or standard OTP login.
+
+// Re-implementing a simple verify-otp for LOGIN recovery if needed
+router.post('/login-verify-otp', async (req, res) => {
+  try {
+    const { email, phoneNumber, otp } = req.body;
+    let query = { otp, otpExpires: { $gt: Date.now() } };
+    if (email) query.email = email;
+    else if (phoneNumber) query.phoneNumber = phoneNumber;
+    
+    const user = await User.findOne(query);
+    if (!user) return res.status(400).json({ success: false, message: 'Invalid code' });
+
+    user.isVerified = true;
+    user.otp = undefined;
+    await user.save();
+    
+    const token = createToken(user);
+    res.json({ success: true, token, user });
+  } catch (err) { res.status(500).json({ success: false }); }
 });
 
 // @route   POST /api/auth/login
 // @desc    Login user
 // @access  Public
-router.post('/login', [
-  body('email').isEmail().withMessage('Please enter a valid email'),
-  body('password').exists().withMessage('Password is required')
-], async (req, res) => {
+router.post('/login', async (req, res) => {
   try {
-    // Check for validation errors
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      return res.status(400).json({
-        success: false,
-        message: 'Validation failed',
-        errors: errors.array()
-      });
-    }
+    const { email, phoneNumber, password } = req.body;
 
-    const { email, password } = req.body;
+    let query = {};
+    if (email) query.email = email;
+    else if (phoneNumber) query.phoneNumber = phoneNumber;
+    else return res.status(400).json({ success: false, message: 'Email or phone number is required' });
 
     // Check if user exists
-    const user = await User.findOne({ email }).select('+password');
+    const user = await User.findOne(query).select('+password');
     if (!user) {
-      return res.status(401).json({
-        success: false,
-        message: 'Invalid credentials'
-      });
+      return res.status(401).json({ success: false, message: 'Invalid credentials' });
     }
 
     // Check password
     const isMatch = await user.comparePassword(password);
     if (!isMatch) {
-      return res.status(401).json({
-        success: false,
-        message: 'Invalid credentials'
-      });
+      return res.status(401).json({ success: false, message: 'Invalid credentials' });
     }
 
-    // Check if user is verified (admin accounts bypass this check)
+    // Check if user is verified
     if (!user.isVerified && user.role !== 'admin') {
-      return res.status(401).json({
-        success: false,
-        message: 'Please verify your email to access your account.'
-      });
+      return res.status(401).json({ success: false, message: 'Please verify your account to access your account.' });
     }
 
     // Create token
-    const token = jwt.sign(
-      { id: user._id, role: user.role },
-      process.env.JWT_SECRET,
-      { expiresIn: process.env.JWT_EXPIRE || '7d' }
-    );
+    const token = createToken(user);
 
     res.json({
       success: true,
@@ -146,17 +366,14 @@ router.post('/login', [
         firstName: user.firstName,
         lastName: user.lastName,
         email: user.email,
+        phoneNumber: user.phoneNumber,
         role: user.role,
         isVerified: user.isVerified
       }
     });
   } catch (error) {
     console.error('Auth Route Error:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Server error',
-      error: error.message
-    });
+    res.status(500).json({ success: false, message: 'Server error' });
   }
 });
 
@@ -258,16 +475,20 @@ router.post('/resend-verification', protect, async (req, res) => {
 // @route   POST /api/auth/public-resend-verification
 // @desc    Resend verification email (Public)
 // @access  Public
-router.post('/public-resend-verification', [
-  body('email').isEmail().withMessage('Please enter a valid email')
-], async (req, res) => {
+router.post('/public-resend-verification', async (req, res) => {
   try {
-    const user = await User.findOne({ email: req.body.email });
+    const { email, phoneNumber } = req.body;
+    let query = {};
+    if (email) query.email = email;
+    else if (phoneNumber) query.phoneNumber = phoneNumber;
+    else return res.status(400).json({ success: false, message: 'Email or phone number is required' });
+
+    const user = await User.findOne(query);
 
     if (!user) {
       return res.status(404).json({
         success: false,
-        message: 'No user found with this email'
+        message: 'No user found'
       });
     }
 
@@ -278,40 +499,40 @@ router.post('/public-resend-verification', [
       });
     }
 
-    // Generate new verification token
-    const verificationToken = user.generateVerificationToken();
+    // Generate new OTP
+    const otp = user.generateOTP();
     await user.save();
 
-    // Send verification email
-    const verificationUrl = `${process.env.FRONTEND_URL}/verify/${verificationToken}`;
-    const message = `Please click the link below to verify your email:\n\n${verificationUrl}`;
+    if (user.email) {
+      try {
+        await sendEmail({
+          email: user.email,
+          subject: 'Account Verification Code - DealDrop',
+          message: `Your verification code is: ${otp}`,
+          html: `
+            <div style="font-family: sans-serif; text-align: center; padding: 20px; border: 1px solid #eee; border-radius: 10px;">
+              <h2 style="color: #1E3A8A;">Verification Code</h2>
+              <p>You requested a new verification code for your DealDrop account.</p>
+              <p>Use the following 6-digit code to verify your account:</p>
+              <div style="font-size: 32px; font-weight: bold; letter-spacing: 5px; color: #F97316; margin: 20px 0;">
+                ${otp}
+              </div>
+              <p style="color: #666; font-size: 12px;">Valid for 10 minutes. Do not share this with anyone.</p>
+            </div>
+          `
+        });
+      } catch (error) {
+        console.error('Email sending failed:', error);
+      }
+    }
 
-    try {
-      await sendEmail({
-        email: user.email,
-        subject: 'Email Verification - DealDrop',
-        message,
-        html: `
-          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-            <h2>Verification Reminder</h2>
-            <p>You requested a new verification link for your DealDrop account.</p>
-            <p>Please click the button below to verify your email address:</p>
-            <a href="${verificationUrl}" style="background-color: #007bff; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; display: inline-block;">Verify Email</a>
-            <p>This link will expire in 24 hours.</p>
-          </div>
-        `
-      });
-    } catch (error) {
-      console.error('Email sending failed:', error);
-      return res.status(500).json({
-        success: false,
-        message: 'Failed to send verification email. Please check your SMTP settings.'
-      });
+    if (user.phoneNumber) {
+      console.log(`[SMS MOCK] Resending OTP ${otp} to phone: ${user.phoneNumber}`);
     }
 
     res.json({
       success: true,
-      message: 'Verification email resent successfully'
+      message: 'Verification code sent successfully'
     });
   } catch (error) {
     console.error(error);

@@ -45,9 +45,19 @@ const apiRequest = async (endpoint, options = {}) => {
 
 // Auth API
 export const authAPI = {
-  register: (userData) => apiRequest('/auth/register', {
+  registerOTP: (data) => apiRequest('/auth/register-otp', {
     method: 'POST',
-    body: JSON.stringify(userData),
+    body: JSON.stringify(data),
+  }),
+
+  registerVerify: (data) => apiRequest('/auth/register-verify', {
+    method: 'POST',
+    body: JSON.stringify(data),
+  }),
+
+  verifyOTP: (data) => apiRequest('/auth/login-verify-otp', {
+    method: 'POST',
+    body: JSON.stringify(data),
   }),
 
   login: (credentials) => apiRequest('/auth/login', {
@@ -59,9 +69,9 @@ export const authAPI = {
     method: 'POST',
   }),
 
-  resendVerification: (email) => apiRequest('/auth/public-resend-verification', {
+  resendVerification: (data) => apiRequest('/auth/public-resend-verification', {
     method: 'POST',
-    body: JSON.stringify({ email }),
+    body: JSON.stringify(data),
   }),
 
   forgotPassword: (email) => apiRequest('/auth/forgot-password', {
@@ -72,6 +82,16 @@ export const authAPI = {
   resetPassword: (token, password) => apiRequest(`/auth/reset-password/${token}`, {
     method: 'POST',
     body: JSON.stringify({ password }),
+  }),
+
+  googleLogin: (tokenId) => apiRequest('/auth/google-login', {
+    method: 'POST',
+    body: JSON.stringify({ tokenId }),
+  }),
+
+  sendOTP: (data) => apiRequest('/auth/send-otp', {
+    method: 'POST',
+    body: JSON.stringify(data),
   }),
 
   getCurrentUser: () => apiRequest('/auth/me'),

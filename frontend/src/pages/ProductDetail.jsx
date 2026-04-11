@@ -107,23 +107,24 @@ const ProductDetail = () => {
   return (
     <div className="min-h-screen bg-[#F8FAFC] md:pt-24 pt-4 pb-20">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Back Button */}
-        <button 
-          onClick={() => window.history.back()}
-          className="flex items-center gap-2 text-[#6B7280] hover:text-[#1E3A8A] transition-colors font-bold text-sm mb-6"
-        >
-          <ArrowLeft className="h-4 w-4" />
-          Back
-        </button>
-
-        {/* Breadcrumbs */}
-        <nav className="flex mb-8 text-sm font-medium text-[#6B7280]">
-          <Link to="/" className="hover:text-[#1E3A8A]">Home</Link>
-          <span className="mx-2">/</span>
-          <Link to="/products" className="hover:text-[#1E3A8A]">Shop</Link>
-          <span className="mx-2">/</span>
-          <span className="text-[#1F2937] truncate">{product.name}</span>
-        </nav>
+        <div className="flex items-center gap-6 mb-8">
+          <button 
+            onClick={() => window.history.back()}
+            className="flex items-center gap-2 text-[#6B7280] hover:text-[#1E3A8A] transition-colors font-bold text-sm whitespace-nowrap"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            All Products
+          </button>
+          <div className="h-4 w-px bg-gray-200 shrink-0"></div>
+          {/* Breadcrumbs */}
+          <nav className="flex text-sm font-medium text-[#6B7280] overflow-hidden">
+            <Link to="/" className="hover:text-[#1E3A8A] shrink-0">Home</Link>
+            <span className="mx-2 shrink-0">/</span>
+            <Link to="/products" className="hover:text-[#1E3A8A] shrink-0">Shop</Link>
+            <span className="mx-2 shrink-0">/</span>
+            <span className="text-[#1F2937] truncate">{product.name}</span>
+          </nav>
+        </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-20 items-start">
           {/* Left: Gallery */}

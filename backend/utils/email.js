@@ -1,35 +1,36 @@
-const { Resend } = require('resend');
+const nodemailer = require('nodemailer');
 
 /**
- * Send email using Resend (Most reliable for Render/Cloud)
+ * Send email using Nodemailer (Gmail SMTP)
  * @param {Object} options - { email, subject, message, html }
  */
 const sendEmail = async (options) => {
   try {
-    // If RESEND_API_KEY is not set, we'll log it (helps user debug)
-    if (!process.env.RESEND_API_KEY) {
-      console.error('❌ RESEND_API_KEY is missing in environment variables');
-      throw new Error('Email service not configured. Please add RESEND_API_KEY.');
-    }
+    const transporter = nodemailer.createTransport({
+      service: 'gmail',
+      auth: {
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS
+      }
+    });
 
-    const resend = new Resend(process.env.RESEND_API_KEY);
-
-    const data = await resend.emails.send({
-      from: 'DealDrop <onboarding@resend.dev>', // You can change this once you verify your domain
+    const mailOptions = {
+      from: `DealDrop <${process.env.EMAIL_USER}>`,
       to: options.email,
       subject: options.subject,
       text: options.message,
-      html: options.html,
-    });
+      html: options.html
+    };
 
-    if (data.error) {
-      console.error('❌ Resend Error:', data.error);
-      throw new Error(data.error.message);
-    }
-
-    return data;
+    const info = await transporter.sendMail(mailOptions);
+    console.log('✅ Email sent successfully:', info.messageId);
+    return info;
   } catch (error) {
-    console.error('❌ Email sending failed:', error.message);
+    console.error('❌ EMAIL SERVICE ERROR:', {
+      message: error.message,
+      code: error.code,
+      command: error.command
+    });
     throw error;
   }
 };

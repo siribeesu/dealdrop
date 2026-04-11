@@ -16,22 +16,39 @@ const userSchema = new mongoose.Schema({
   },
   email: {
     type: String,
-    required: [true, 'Email is required'],
     unique: true,
     lowercase: true,
+    sparse: true, // Allow nulls for phone-only users
     validate: {
       validator: function(email) {
+        if (!email) return true;
         return /^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,3})+$/.test(email);
       },
       message: 'Please enter a valid email'
     }
   },
+  phoneNumber: {
+    type: String,
+    unique: true,
+    sparse: true,
+    trim: true,
+    validate: {
+      validator: function(v) {
+        if (!v) return true;
+        return /^\+?[1-9]\d{1,14}$/.test(v); // Basic E.164-ish validation
+      },
+      message: 'Please enter a valid phone number'
+    }
+  },
   password: {
     type: String,
-    required: [true, 'Password is required'],
+    required: function() { return !this.googleId; }, // Required only if not a Google user
     minlength: [6, 'Password must be at least 6 characters'],
     select: false // Don't include password in queries by default
   },
+  googleId: String,
+  otp: String,
+  otpExpires: Date,
   role: {
     type: String,
     enum: ['user', 'admin'],
@@ -41,13 +58,17 @@ const userSchema = new mongoose.Schema({
     type: Boolean,
     default: false
   },
+  status: {
+    type: String,
+    enum: ['active', 'suspended'],
+    default: 'active'
+  },
   verificationToken: String,
   verificationTokenExpires: Date,
   passwordResetToken: String,
   passwordResetExpires: Date,
   profile: {
     avatar: String,
-    phone: String,
     address: {
       street: String,
       city: String,
@@ -90,7 +111,7 @@ userSchema.virtual('fullName').get(function() {
 
 // Hash password before saving
 userSchema.pre('save', async function(next) {
-  if (!this.isModified('password')) return next();
+  if (!this.password || !this.isModified('password')) return next();
 
   try {
     const salt = await bcrypt.genSalt(12);
@@ -103,6 +124,7 @@ userSchema.pre('save', async function(next) {
 
 // Compare password method
 userSchema.methods.comparePassword = async function(candidatePassword) {
+  if (!this.password) return false;
   return await bcrypt.compare(candidatePassword, this.password);
 };
 
@@ -112,6 +134,14 @@ userSchema.methods.generateVerificationToken = function() {
   this.verificationToken = token;
   this.verificationTokenExpires = Date.now() + 24 * 60 * 60 * 1000; // 24 hours
   return token;
+};
+
+// Generate OTP (6 digits)
+userSchema.methods.generateOTP = function() {
+  const otp = Math.floor(100000 + Math.random() * 900000).toString();
+  this.otp = otp;
+  this.otpExpires = Date.now() + 10 * 60 * 1000; // 10 minutes
+  return otp;
 };
 
 // Generate password reset token
