@@ -6,7 +6,7 @@ const StaticPageLayout = ({ title, icon: Icon, children }) => {
   const navigate = useNavigate()
   
   return (
-    <div className="min-h-screen bg-[#F8FAFC] pb-12 md:pb-24">
+    <div className="min-h-screen bg-[#F8FAFC]">
       <div className="bg-[#1E3A8A] pt-12 md:pt-16 pb-14 md:pb-32 px-4 sm:px-6 lg:px-8 text-center relative">
         <button 
           onClick={() => navigate(-1)}
@@ -29,7 +29,7 @@ const StaticPageLayout = ({ title, icon: Icon, children }) => {
         </nav>
       </div>
 
-    <div className="max-w-4xl mx-auto px-4 md:px-8 -mt-4 md:-mt-20 relative z-10">
+    <div className="max-w-4xl mx-auto px-4 md:px-8 mt-0 sm:-mt-20 relative z-10">
       <div className="bg-white rounded-[2.5rem] md:rounded-[3rem] pt-6 pb-10 px-6 md:p-12 shadow-2xl border border-[#E5E7EB]/50 overflow-hidden">
         <div className="overflow-x-auto scrollbar-hide">
           {children}

@@ -24,19 +24,23 @@ const MobileNav = () => {
           <Link
             key={item.label}
             to={item.path}
-            className={`flex flex-col items-center justify-center w-full h-full gap-1 transition-all ${
+            className={`relative flex flex-col items-center justify-center w-full h-full gap-1 transition-all active:scale-95 select-none ${
               isActive(item.path) ? 'text-[#1E3A8A]' : 'text-[#9CA3AF]'
             }`}
+            style={{ WebkitTapHighlightColor: 'transparent' }}
           >
-            <div className="relative">
-              <item.icon className={`h-6 w-6 ${isActive(item.path) ? 'fill-current' : ''}`} />
+            <div className={`relative p-2 rounded-xl transition-colors ${isActive(item.path) ? 'bg-blue-50' : ''}`}>
+              <item.icon className="h-5 w-5" />
               {item.badge > 0 && (
-                <span className="absolute -top-1.5 -right-1.5 h-4 w-4 bg-[#F97316] text-white text-[9px] font-bold flex items-center justify-center rounded-full border border-white">
+                <span className="absolute -top-1 -right-1 h-4 w-4 bg-[#F97316] text-white text-[9px] font-bold flex items-center justify-center rounded-full border border-white">
                   {item.badge}
                 </span>
               )}
             </div>
-            <span className="text-[10px] font-bold uppercase tracking-tighter">{item.label}</span>
+            <span className="text-[9px] font-black uppercase tracking-tighter">{item.label}</span>
+            {isActive(item.path) && (
+              <div className="absolute bottom-1 w-5 h-0.5 bg-[#1E3A8A] rounded-full"></div>
+            )}
           </Link>
         ))}
       </div>

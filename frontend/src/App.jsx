@@ -29,10 +29,11 @@ const PageLayout = ({ children, hasPadding = true }) => (
   <div className="flex flex-col min-h-screen">
     <ScrollToTop />
     <Navbar />
-    <main className={`flex-grow ${hasPadding ? 'pt-20' : ''} pb-20 lg:pb-0`}>
+    <main className={`flex-grow ${hasPadding ? 'pt-20' : ''}`}>
       {children}
     </main>
     <Footer />
+    <div className="h-20 lg:hidden"></div>
     <MobileNav />
   </div>
 )

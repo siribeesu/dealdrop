@@ -74,12 +74,12 @@ const ProductDetail = () => {
       setAddingToCart(true)
       const response = await cartAPI.addToCart({ productId: product._id, quantity })
       if (response.success) {
-        alert('Product added to cart successfully!')
+        // Silent success
       } else {
-        alert(response.message || 'Failed to add product to cart.')
+        console.error(response.message || 'Failed to add product to cart.')
       }
     } catch (error) {
-      alert('Error adding to cart.')
+      console.error('Error adding to cart:', error)
     } finally {
       setAddingToCart(false)
     }
@@ -171,10 +171,6 @@ const ProductDetail = () => {
                 <span className="text-sm font-medium text-[#6B7280]">
                   ({product.reviewCount || 0} customer reviews)
                 </span>
-                <span className="h-4 w-[1px] bg-[#E5E7EB]"></span>
-                <span className={`text-sm font-bold ${product.stock > 0 ? 'text-[#16A34A]' : 'text-red-500'}`}>
-                  {product.stock > 0 ? 'In Stock' : 'Out of Stock'}
-                </span>
               </div>
 
               <div className="flex items-baseline gap-3 mb-8">
@@ -244,14 +240,32 @@ const ProductDetail = () => {
             </div>
 
             {/* Delivery Info */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-8 border-t border-[#E5E7EB]">
-              <div className="flex items-center gap-3">
-                <div className="h-10 w-10 bg-blue-50 rounded-xl flex items-center justify-center text-[#1E3A8A]">
-                  <Truck className="h-5 w-5" />
+            <div className="grid grid-cols-3 gap-2 pt-8 border-t border-[#E5E7EB]">
+              <div className="flex flex-col items-center text-center gap-2">
+                <div className="h-9 w-9 bg-blue-50 rounded-xl flex items-center justify-center text-[#1E3A8A]">
+                  <Truck className="h-4 w-4" />
                 </div>
                 <div>
-                  <p className="text-xs font-bold text-[#1F2937]">Free Delivery</p>
-                  <p className="text-[11px] text-[#6B7280]">On orders above ₹499</p>
+                  <p className="text-[10px] font-bold text-[#1F2937]">Free Delivery</p>
+                  <p className="text-[9px] text-[#6B7280]">Above ₹499</p>
+                </div>
+              </div>
+              <div className="flex flex-col items-center text-center gap-2">
+                <div className="h-9 w-9 bg-green-50 rounded-xl flex items-center justify-center text-green-600">
+                  <ShieldCheck className="h-4 w-4" />
+                </div>
+                <div>
+                  <p className="text-[10px] font-bold text-[#1F2937]">Secure Pay</p>
+                  <p className="text-[9px] text-[#6B7280]">100% Safe</p>
+                </div>
+              </div>
+              <div className="flex flex-col items-center text-center gap-2">
+                <div className="h-9 w-9 bg-purple-50 rounded-xl flex items-center justify-center text-purple-600">
+                  <RotateCcw className="h-4 w-4" />
+                </div>
+                <div>
+                  <p className="text-[10px] font-bold text-[#1F2937]">Easy Return</p>
+                  <p className="text-[9px] text-[#6B7280]">7 Days Policy</p>
                 </div>
               </div>
             </div>

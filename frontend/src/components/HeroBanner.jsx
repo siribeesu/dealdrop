@@ -30,37 +30,37 @@ const HeroBanner = () => {
               secure payments, and exceptional customer service.
             </p>
 
-            <div className="flex flex-wrap gap-4 mb-12">
-              <Link to="/products">
-                <button className="h-14 px-10 bg-[#FF7D29] hover:bg-[#F97316] text-white rounded-2xl text-base font-bold transition-all shadow-lg shadow-orange-500/20 flex items-center gap-2">
+            <div className="flex gap-3 mb-10 sm:mb-12">
+              <Link to="/products" className="flex-1 sm:flex-none">
+                <button className="w-full sm:w-auto h-12 md:h-14 px-4 sm:px-10 bg-[#FF7D29] hover:bg-[#F97316] text-white rounded-2xl text-sm md:text-base font-bold transition-all shadow-lg shadow-orange-500/20 flex items-center justify-center gap-2">
                   Shop Now
-                  <ArrowRight className="h-4 w-4" />
+                  <ArrowRight className="h-4 w-4 hidden sm:block" />
                 </button>
               </Link>
-              <Link to="/products?deals=true">
-                <button className="h-14 px-10 bg-white/10 hover:bg-white/15 text-white border border-white/10 rounded-2xl text-base font-bold transition-all backdrop-blur-sm">
-                  View Deals
+              <Link to="/products?new=true" className="flex-1 sm:flex-none">
+                <button className="w-full sm:w-auto h-12 md:h-14 px-4 sm:px-10 bg-white/10 hover:bg-white/15 text-white border border-white/10 rounded-2xl text-sm md:text-base font-bold transition-all backdrop-blur-sm flex items-center justify-center">
+                  New Arrivals
                 </button>
               </Link>
             </div>
 
             {/* Bottom: Service Items */}
-            <div className="flex flex-wrap items-center gap-8 pt-6 border-t border-white/10">
-              <div className="flex items-center gap-2 text-white/60 text-sm">
-                <div className="h-8 w-8 rounded-lg bg-white/5 flex items-center justify-center">
-                  <Truck className="h-4 w-4" />
+            <div className="grid grid-cols-3 gap-2 md:gap-8 pt-6 border-t border-white/10">
+              <div className="flex flex-col sm:flex-row items-center sm:items-start gap-1 sm:gap-2 text-white/60 text-[10px] sm:text-sm text-center sm:text-left">
+                <div className="h-7 w-7 sm:h-8 sm:w-8 rounded-lg bg-white/5 flex items-center justify-center shrink-0">
+                  <Truck className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                 </div>
                 Free Shipping
               </div>
-              <div className="flex items-center gap-2 text-white/60 text-sm">
-                <div className="h-8 w-8 rounded-lg bg-white/5 flex items-center justify-center">
-                  <ShieldCheck className="h-4 w-4" />
+              <div className="flex flex-col sm:flex-row items-center sm:items-start gap-1 sm:gap-2 text-white/60 text-[10px] sm:text-sm text-center sm:text-left">
+                <div className="h-7 w-7 sm:h-8 sm:w-8 rounded-lg bg-white/5 flex items-center justify-center shrink-0">
+                  <ShieldCheck className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                 </div>
                 Secure Payment
               </div>
-              <div className="flex items-center gap-2 text-white/60 text-sm">
-                <div className="h-8 w-8 rounded-lg bg-white/5 flex items-center justify-center">
-                  <HelpCircle className="h-4 w-4" />
+              <div className="flex flex-col sm:flex-row items-center sm:items-start gap-1 sm:gap-2 text-white/60 text-[10px] sm:text-sm text-center sm:text-left">
+                <div className="h-7 w-7 sm:h-8 sm:w-8 rounded-lg bg-white/5 flex items-center justify-center shrink-0">
+                  <HelpCircle className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                 </div>
                 24/7 Support
               </div>
@@ -68,12 +68,12 @@ const HeroBanner = () => {
           </div>
 
           {/* Right: Image Section with Floating Card */}
-          <div className="relative mt-12 lg:mt-0">
-            <div className="relative z-10">
+          <div className="relative mt-8 lg:mt-0 flex justify-center lg:justify-end">
+            <div className="relative z-10 w-full max-w-lg lg:max-w-none">
               <img
                 src="https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=1200&q=80"
                 alt="Boutique Shop Interior"
-                className="rounded-[2.5rem] shadow-2xl w-full h-[400px] lg:h-[500px] object-cover border-4 border-white/5"
+                className="rounded-[2rem] shadow-2xl w-full h-[320px] lg:h-[450px] object-cover border-4 border-white/5"
               />
               
               {/* Floating Trusted Card */}
