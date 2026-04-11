@@ -33,7 +33,10 @@
         "nodemailer": "^6.9.7",
         "resend": "^6.9.2",
         "xss-clean": "^0.1.4",
-        "concurrently": "^8.2.2"
+        "concurrently": "^8.2.2",
+        "google-auth-library": "^10.6.2",
+        "twilio": "^5.13.1",
+        "otp-generator": "^4.0.1"
     },
     "devDependencies": {
         "nodemon": "^3.0.2"
