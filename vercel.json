@@ -1,0 +1,13 @@
+{
+  "version": 3,
+  "services": {
+    "frontend": {
+      "path": "frontend",
+      "framework": "vite"
+    },
+    "backend": {
+      "path": "backend",
+      "framework": "express"
+    }
+  }
+}
